@@ -1,0 +1,11 @@
+Board: STM32F103 ($4)
+Display: 1.5" 128x64 SPI ($4)
+SD Reader:
+Battery:
+Case:
+Piezo Buzzer:
+Buttons: ($0.75)
+Switch:
+LED:
+Wire:
+Resistors:

@@ -1,0 +1,26 @@
+CHIPnGo
+-------
+Handheld CHIP8 game console using JAXE emulator
+
+To-Do
+-----
+-Practice using STM32CubeIDE and flashing
+-Write UART, systick and GPIO drivers
+-Get emulator running using uart serial to verify
+-Wire in buttons as input
+-Write SPI driver
+-Use Nokia 5110 for display testing
+-Wire up actual display
+-Write driver for actual display
+-Test throughly
+-Wire in buzzer
+-Write code to generate sound
+-Wire in SD reader
+-Write SD reader driver
+-Write code to read ROMs and configs from SD
+-Write code to save userflags in Flash memory
+-Write menu, boot splash, etc
+-Figure out battery power situation
+-Add switch to turn board on/off
+-Look into prototype board to solder all together
+-Look into building case
