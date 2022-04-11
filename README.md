@@ -1,4 +1,8 @@
 # CHIPnGo
+|Current Status|
+|--------------|
+|<img src = "/images/current_status.jpg?raw=true">|
+
 Recently I've taken a serious interest in embedded development, so I decided for my first project I would attempt to port my [CHIP-8 emulator](https://github.com/kurtjd/jaxe) to a STM32 microcontroller in order to eventually build a CHIP-8 hand-held gaming console. Since this is being done as a learning experience, I also decided I would do this bare-metal with no libraries and write all drivers from scratch. While this is proving to be slow and extremely frustrating at times, it has also been very insightful and I've already learned a ton in such a short time.
 
 ## Progress
