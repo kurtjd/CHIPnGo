@@ -15,7 +15,10 @@
 
 #define GPIOA_CLK   0x04
 #define GPIOA_START 0x40010800
+#define GPIOA_CRL   (*((volatile uint32_t *)(GPIOA_START + 0x00)))
 #define GPIOA_CRH   (*((volatile uint32_t *)(GPIOA_START + 0x04)))
+#define GPIOA_IDR   (*((volatile uint32_t *)(GPIOA_START + 0x08)))
+#define GPIOA_ODR   (*((volatile uint32_t *)(GPIOA_START + 0x0C)))
 
 
 typedef enum GPIO {

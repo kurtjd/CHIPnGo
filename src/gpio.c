@@ -1,15 +1,14 @@
 #include "gpio.h"
 
 void gpio_init(GPIO port) {
+    uint32_t clk = GPIOA_CLK;
+
     switch (port) {
     case GPIOA:
+        clk = GPIOA_CLK;
         break;
     case GPIOB:
-        RCC_APB2ENR |= GPIOB_CLK;
-
-        // Clear registers since default state is not clear
-        GPIOB_CRL = 0;
-        GPIOB_CRH = 0;
+        clk = GPIOB_CLK;
         break;
     case GPIOC:
         break;
@@ -22,4 +21,7 @@ void gpio_init(GPIO port) {
     case GPIOG:
         break;
     }
+
+    RCC_APB2ENR |= clk;
+    for (volatile int i = 0; i < 10; i++);
 }

@@ -4,6 +4,7 @@
 #include "clock.h"
 #include "gpio.h"
 #include "uart.h"
+#include "spi.h"
 #include "buttons.h"
 #include "chip8.h"
 
@@ -109,9 +110,10 @@ bool handle_input(void)
 int main(void)
 {
     set_sysclk(72);
+    gpio_init(GPIOA);
     gpio_init(GPIOB);
     buttons_init();
-	
+    spi_init();
 	uart_init(500000);
 
     // Wait for button press here

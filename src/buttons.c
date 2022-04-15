@@ -1,4 +1,3 @@
-#include <stdint.h>
 #include <stdbool.h>
 #include "gpio.h"
 #include "buttons.h"
@@ -13,6 +12,10 @@
 
 
 void buttons_init(void) {
+    // Clear registers since default state is not clear
+    GPIOB_CRL = 0;
+    GPIOB_CRH = 0;
+
     // Set inputs as internal pull-up
     GPIOB_CRL |= (BTN_LEFT_MODE | BTN_UP_MODE | BTN_DOWN_MODE | BTN_RIGHT_MODE);
     GPIOB_CRH |= (BTN_A_MODE | BTN_B_MODE);
