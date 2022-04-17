@@ -4,10 +4,6 @@ Handheld CHIP8 game console using JAXE emulator
 
 To-Do
 -----
--Practice using STM32CubeIDE and flashing
--Write UART, systick and GPIO drivers
--Get emulator running using uart serial to verify
--Wire in buttons as input
 -Write SPI driver
 -Use Nokia 5110 for display testing
 -Wire up actual display
