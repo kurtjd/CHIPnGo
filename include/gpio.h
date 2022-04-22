@@ -5,6 +5,7 @@
 
 #define RCC         0x40021000
 #define RCC_APB2ENR (*((volatile uint32_t *)(RCC + 0x18)))
+#define RCC_APB1ENR (*((volatile uint32_t *)(RCC + 0x1C)))
 
 #define GPIOB_CLK   0x08
 #define GPIOB_START 0x40010C00

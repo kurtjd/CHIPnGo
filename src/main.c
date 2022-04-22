@@ -6,6 +6,7 @@
 #include "uart.h"
 #include "spi.h"
 #include "buttons.h"
+#include "pwm.h"
 #include "chip8.h"
 
 // Emulator
@@ -51,10 +52,12 @@ void handle_sound(void)
 {
     if (!play_sound && chip8.beep)
     {
+        pwm_start();
         play_sound = true;
     }
     else if (play_sound && !chip8.beep)
     {
+        pwm_stop();
         play_sound = false;
     }
 }
@@ -69,11 +72,12 @@ void handle_display(void)
 }
 
 // Checks for key presses/releases and a quit event.
-bool handle_input(void)
+void handle_input(void)
 {
     // Do stuff with buttons here
     if (btn_pressed(BTN_LEFT)) {
         chip8.keypad[0x07] = KEY_DOWN;
+        chip8.keypad[0x04] = KEY_DOWN;
     }
     if (btn_pressed(BTN_UP)) {
         chip8.keypad[0x05] = KEY_DOWN;
@@ -83,6 +87,7 @@ bool handle_input(void)
     }
     if (btn_pressed(BTN_RIGHT)) {
         chip8.keypad[0x09] = KEY_DOWN;
+        chip8.keypad[0x06] = KEY_DOWN;
     }
     if (btn_pressed(BTN_B)) {
         chip8.keypad[0x06] = KEY_DOWN;
@@ -90,6 +95,7 @@ bool handle_input(void)
 
     if (btn_released(BTN_LEFT)) {
         chip8.keypad[0x07] = KEY_UP;
+        chip8.keypad[0x04] = KEY_UP;
     }
     if (btn_released(BTN_UP)) {
         chip8.keypad[0x05] = KEY_UP;
@@ -99,12 +105,11 @@ bool handle_input(void)
     }
     if (btn_released(BTN_RIGHT)) {
         chip8.keypad[0x09] = KEY_UP;
+        chip8.keypad[0x06] = KEY_UP;
     }
     if (btn_released(BTN_B)) {
         chip8.keypad[0x06] = KEY_UP;
     }
-
-    return true;
 }
 
 int main(void)
@@ -115,6 +120,7 @@ int main(void)
     buttons_init();
     spi_init();
 	uart_init(500000);
+    pwm_init(440);
 
     // Wait for button press here
     while (!btn_released(BTN_B));
@@ -122,8 +128,9 @@ int main(void)
     init_emulator();
     clock_start();
 
-    while (!chip8.exit && handle_input())
+    while (1)
     {
+        handle_input();
         chip8_cycle(&chip8);
         handle_sound();
         handle_display();
