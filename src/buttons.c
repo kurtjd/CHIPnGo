@@ -2,23 +2,31 @@
 #include "gpio.h"
 #include "buttons.h"
 
-#define BTN_LEFT_MODE  (1 << 19)
-#define BTN_UP_MODE    (1 << 23)
-#define BTN_DOWN_MODE  (1 << 27)
-#define BTN_RIGHT_MODE (1 << 31)
+#define BTN_LEFT_MODE_PU  (1 << 19)
+#define BTN_UP_MODE_PU    (1 << 23)
+#define BTN_DOWN_MODE_PU  (1 << 27)
+#define BTN_RIGHT_MODE_PU (1 << 31)
 
-#define BTN_A_MODE     (1 << 3)
-#define BTN_B_MODE     (1 << 7)
+#define BTN_A_MODE_PU     (1 << 3)
+#define BTN_B_MODE_PU     (1 << 7)
+
+#define BTN_LEFT_MODE_FI  (1 << 18)
+#define BTN_UP_MODE_FI    (1 << 22)
+#define BTN_DOWN_MODE_FI  (1 << 26)
+#define BTN_RIGHT_MODE_FI (1 << 30)
+
+#define BTN_A_MODE_FI     (1 << 2)
+#define BTN_B_MODE_FI     (1 << 6)
 
 
 void buttons_init(void) {
-    // Clear registers since default state is not clear
-    GPIOB_CRL = 0;
-    GPIOB_CRH = 0;
+    // Clear floating input bits (which are set to 1 at reset)
+    GPIOB_CRL &= ~(BTN_LEFT_MODE_FI | BTN_UP_MODE_FI | BTN_DOWN_MODE_FI | BTN_RIGHT_MODE_FI);
+    GPIOB_CRH &= ~(BTN_A_MODE_FI | BTN_B_MODE_FI);
 
     // Set inputs as internal pull-up
-    GPIOB_CRL |= (BTN_LEFT_MODE | BTN_UP_MODE | BTN_DOWN_MODE | BTN_RIGHT_MODE);
-    GPIOB_CRH |= (BTN_A_MODE | BTN_B_MODE);
+    GPIOB_CRL |= (BTN_LEFT_MODE_PU | BTN_UP_MODE_PU | BTN_DOWN_MODE_PU | BTN_RIGHT_MODE_PU);
+    GPIOB_CRH |= (BTN_A_MODE_PU | BTN_B_MODE_PU);
 
     GPIOB_ODR |= 0x3F0; // Activate pull-up resistor
 }

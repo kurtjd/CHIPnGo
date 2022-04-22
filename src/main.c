@@ -6,6 +6,7 @@
 #include "uart.h"
 #include "spi.h"
 #include "buttons.h"
+#include "pwm.h"
 #include "chip8.h"
 
 // Emulator
@@ -115,6 +116,7 @@ int main(void)
     buttons_init();
     spi_init();
 	uart_init(500000);
+    pwm_init(440);
 
     // Wait for button press here
     while (!btn_released(BTN_B));
