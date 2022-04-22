@@ -19,7 +19,6 @@ Currently, I have basic drivers written for interfacing with peripherals such as
 ## ToDo
 - Wire LCD and write LCD driver
 - Wire SD card reader and write SD driver
-- Wire piezo buzzer and generate appropriate frequency via code
 - Add startup menu for user to select ROM via SD card, as well as configure options such as button mapping
 - Add ROM config file parser, in order to save configurations for certain ROMs to SD
 - Add functionality for S-CHIP user flags to be saved to flash memory
