@@ -1,4 +1,4 @@
-#include "spi.h"
+#include "display.h"
 #include "gpio.h"
 
 #define SPI_CLK    (1 << 12)
@@ -15,7 +15,7 @@ static void _gpio_init(void) {
     GPIOA_CRL |= ((1 << 19) | (1 << 23) | (1 << 31));
 }
 
-void spi_init(void) {
+void display_init(void) {
     _gpio_init();
 
     RCC_APB2ENR |= SPI_CLK;
@@ -25,7 +25,7 @@ void spi_init(void) {
     SPI1_CR1 |= (1 << 6); // Enable
 }
 
-void spi_write(uint8_t data) {
+void display_draw(uint8_t data) {
     while (!(SPI1_SR & 0x02));
     SPI1_DR = data;
 }
