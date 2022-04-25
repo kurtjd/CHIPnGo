@@ -8,6 +8,7 @@
 #include "buttons.h"
 #include "pwm.h"
 #include "chip8.h"
+#include "delay.h"
 
 // Emulator
 CHIP8 chip8;
@@ -118,7 +119,6 @@ int main(void)
     gpio_init(GPIOA);
     gpio_init(GPIOB);
     buttons_init();
-    spi_init();
 	uart_init(500000);
     pwm_init(440);
 

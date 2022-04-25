@@ -5,8 +5,8 @@
 
 enum Button {
     BTN_LEFT = 4,
-    BTN_UP,
     BTN_DOWN,
+    BTN_UP,
     BTN_RIGHT,
     BTN_A,
     BTN_B
