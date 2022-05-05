@@ -4,11 +4,10 @@
 #include "clock.h"
 #include "gpio.h"
 #include "uart.h"
-#include "spi.h"
+#include "sd.h"
 #include "buttons.h"
 #include "pwm.h"
 #include "chip8.h"
-#include "delay.h"
 
 // Emulator
 CHIP8 chip8;
@@ -121,6 +120,7 @@ int main(void)
     buttons_init();
 	uart_init(500000);
     pwm_init(440);
+    sd_init();
 
     // Wait for button press here
     while (!btn_released(BTN_B));
