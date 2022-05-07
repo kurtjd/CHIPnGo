@@ -3,8 +3,8 @@
 #include "sysclk.h"
 #include "clock.h"
 #include "gpio.h"
-#include "uart.h"
 #include "sd.h"
+#include "display.h"
 #include "buttons.h"
 #include "pwm.h"
 #include "chip8.h"
@@ -38,13 +38,7 @@ bool init_emulator(void)
 // Makes the physical screen match the emulator display.
 void draw_display(void)
 {
-    for (int y = 0; y < DISPLAY_HEIGHT; y++)
-    {
-        for (int x = 0; x < DISPLAY_WIDTH_BYTES; x++)
-        {
-            uart_write(chip8.display[y][x]);
-        }
-    }
+    display_draw(chip8.display);
 }
 
 // Handles sound.
@@ -118,12 +112,12 @@ int main(void)
     gpio_init(GPIOA);
     gpio_init(GPIOB);
     buttons_init();
-	uart_init(500000);
     pwm_init(440);
     sd_init();
+    display_init();
 
     // Wait for button press here
-    while (!btn_released(BTN_B));
+    //while (!btn_released(BTN_B));
 	
     init_emulator();
     clock_start();
