@@ -19,6 +19,16 @@ bool play_sound = false;
 bool quirks[NUM_QUIRKS] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 
+// A basic splash screen that waits for user to press A
+void show_splash(void) {
+    display_print(37, 2, "CHIP N GO");
+    display_print(20, 4, "PRESS A TO PLAY");
+    display_print(5, 7, "CREATED BY KURT");
+
+    while (!btn_released(BTN_A));
+}
+
+
 // Set up the emulator to begin running.
 bool init_emulator(void)
 {
@@ -116,8 +126,7 @@ int main(void)
     sd_init();
     display_init();
 
-    // Wait for button press here
-    //while (!btn_released(BTN_B));
+    show_splash();
 	
     init_emulator();
     clock_start();
