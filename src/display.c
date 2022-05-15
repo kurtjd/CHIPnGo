@@ -102,7 +102,8 @@ static void _spi_init(void) {
     RCC_APB2ENR |= SPI_CLK;
     for (volatile int i = 0; i < 10; i++);
 
-    SPI1_CR1 |= (3 << 3); // CLK / 16 (fastest speed that works)
+    //SPI1_CR1 |= (3 << 3); // CLK / 16 (fastest speed that works)
+    SPI1_CR1 |= (1 << 5); // CLK / 32 (fastest speed that doesn't glitch?)
     SPI1_CR2 |= (1 << 2); // Enable SS output
     SPI1_CR1 |= (1 << 15); // 1 line mode
     SPI1_CR1 |= (1 << 14); // Transmit-only
