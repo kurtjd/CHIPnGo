@@ -50,7 +50,7 @@ void pwm_init(int freq) {
     TIM3_PSC = PSC;
 
     // Calculate the ARR value based on the given freq and a set prescaler
-    TIM3_ARR = APB1_CLOCK_SPEED / (freq * PSC);
+    TIM3_ARR = APB1_CLOCK_SPEED / ((freq / 2) * PSC);
 
     // Set the duty cycle (always 50%)
     TIM3_CCR4 = (TIM3_ARR / 2);

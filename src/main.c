@@ -3,6 +3,7 @@
 #include "sysclk.h"
 #include "clock.h"
 #include "gpio.h"
+#include "uart.h"
 #include "sd.h"
 #include "display.h"
 #include "buttons.h"
@@ -121,13 +122,20 @@ int main(void)
     set_sysclk(72);
     gpio_init(GPIOA);
     gpio_init(GPIOB);
-    buttons_init();
-    pwm_init(440);
-    sd_init();
-    display_init();
 
+    uart_init(9600);
+
+    buttons_init();
+    pwm_init(880);
+
+    if (sd_init())
+        uart_write_str("SD successfully initialized!\n");
+    else
+        uart_write_str("SD failed to initialize.\n");
+
+    display_init();
     show_splash();
-	
+
     init_emulator();
     clock_start();
 
