@@ -118,11 +118,11 @@ void handle_input(void)
     }
 }
 
-void echo_sd_block(uint8_t addr) {
-    uint8_t data[SD_BLOCK_SIZE] = {0};
-    sd_read_block(addr, data);
+void echo_sd_read(uint32_t addr) {
+    uint8_t data[SD_BLOCK_SIZE * 2] = {0};
+    sd_read_blocks(addr, data, 2);
 
-    for (int i = 0; i < SD_BLOCK_SIZE; i++) {
+    for (int i = 0; i < SD_BLOCK_SIZE * 2; i++) {
         char msg[7] = {0};
         sprintf(msg, "0x%02X ", data[i]);
 
@@ -148,7 +148,7 @@ int main(void)
 
     if (sd_init()) {
         uart_write_str("SD successfully initialized!\n\n");
-        echo_sd_block(0); // Just a test to ensure we actually read a block
+        echo_sd_read(25088); // Just a test to ensure we actually read blocks
     } else {
         uart_write_str("SD failed to initialize.\n\n");
     }

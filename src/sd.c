@@ -9,7 +9,7 @@
  * -Erase ROM by shifting all ROMS left 9 sectors
  */
 
-#include <stdio.h>
+#include <stdlib.h>
 #include "sd.h"
 #include "gpio.h"
 #include "delay.h"
@@ -34,7 +34,7 @@
 #define READ_BYTE_DELAY 8
 #define CARD_IDLE 1
 #define CMD_OK 0
-#define CMD_17_OK 0xFE
+#define RW_OK 0xFE
 
 struct command {
     uint8_t cmd_bits;
@@ -75,6 +75,18 @@ const struct command READ_OCR = {
 const struct command READ_SINGLE_BLOCK = {
     17,
     {0x00, 0x00, 0x00, 0x00}, // These will be replaced by addr bytes
+    0xFF
+};
+
+const struct command READ_MULTIPLE_BLOCK = {
+    18,
+    {0x00, 0x00, 0x00, 0x00}, // These will be replaced by addr bytes
+    0xFF
+};
+
+const struct command STOP_TRANSMISSION = {
+    12,
+    {0x00, 0x00, 0x00, 0x00},
     0xFF
 };
 
@@ -148,7 +160,7 @@ static uint8_t _read_R1(void) {
 static const uint8_t* _read_R3(void) {
     static uint8_t resp[NUM_R3_RESP_BYTES];
 
-    // First read the response byte. The read the next 4 data bytes.
+    // First read the response byte. Then read in data bytes.
     resp[0] = _read_R1();
     for (int i = 1; i < NUM_R3_RESP_BYTES; i++) {
         _dummy_write(1);
@@ -191,6 +203,7 @@ static void _send_cmd(const struct command *cmd, const uint8_t *args) {
 static bool _reset(void) {
     // Some garbage comes in on MISO when MCU is reset without power loss
     // So do a few writes to discard it
+    // TODO: Maybe come up with more elegant way to handle this
     _dummy_write(3);
 
     _send_cmd(&GO_IDLE_STATE, NULL);
@@ -230,6 +243,25 @@ static bool _wait_for_data_token(uint8_t token) {
     return true; // Todo: Return false if timeout
 }
 
+static void _split_addr(uint32_t addr, uint8_t *buf) {
+    // Split addr into 4 argument bytes
+    for (int i = 0; i < NUM_ARGS; i++)
+        buf[i] = (addr >> (24 - (i * 8))) & 0xFF;
+}
+
+static void _read_block_data(uint8_t *buffer) {
+    if (!_wait_for_data_token(RW_OK))
+        return;
+
+    for (int i = 0; i < SD_BLOCK_SIZE; i++) {
+        _dummy_write(1);
+        buffer[i] = sd_read();
+    }
+
+    // Have to read the 2 byte CRC so send a couple dummy writes
+    _dummy_write(2);
+}
+
 bool sd_init(void) {
     if (!sd_inserted())
         return false;
@@ -267,24 +299,27 @@ bool sd_inserted(void) {
     return (GPIOA_IDR & (1 << 8));
 }
 
-void sd_read_block(uint16_t addr, uint8_t *buffer) {
+void sd_read_block(uint32_t addr, uint8_t *buffer) {
     uint8_t args[NUM_ARGS];
+    _split_addr(addr, args);
 
-    // Split addr into 4 argument bytes
-    for (int i = 0; i < NUM_ARGS; i++)
-        args[i] = (addr >> (24 - (i * 8))) & 0xFF;
-
-    /* Send a read command and ensure we get an OK response,
-     * wait for the beginning of the data packet,
-     * then read data bytes into buffer. */
     _send_cmd(&READ_SINGLE_BLOCK, args);
-    if (_read_R1() == CMD_OK && _wait_for_data_token(CMD_17_OK)) {
-        for (int i = 0; i < SD_BLOCK_SIZE; i++) {
-            _dummy_write(1);
-            buffer[i] = sd_read();
-        }
+    if (_read_R1() == CMD_OK)
+        _read_block_data(buffer);
+}
 
-        // Have to read the 2 byte CRC so send a couple dummy writes
-        _dummy_write(2);
+void sd_read_blocks(uint32_t addr, uint8_t *buffer, int num_blocks) {
+    uint8_t args[NUM_ARGS];
+    _split_addr(addr, args);
+
+    _send_cmd(&READ_MULTIPLE_BLOCK, args);
+    if (_read_R1() == CMD_OK) {
+        for (int i = 0; i < num_blocks; i++)
+            _read_block_data(buffer + (i * SD_BLOCK_SIZE));
+
+        // Signal we wish to stop reading data
+        _send_cmd(&STOP_TRANSMISSION, NULL);
+        _dummy_write(1); // Discard stuff byte
+        _read_R1();
     }
 }
