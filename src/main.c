@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include "sysclk.h"
 #include "clock.h"
 #include "gpio.h"
@@ -117,6 +118,23 @@ void handle_input(void)
     }
 }
 
+void echo_sd_block(uint8_t addr) {
+    uint8_t data[SD_BLOCK_SIZE] = {0};
+    sd_read_block(addr, data);
+
+    for (int i = 0; i < SD_BLOCK_SIZE; i++) {
+        char msg[7] = {0};
+        sprintf(msg, "0x%02X ", data[i]);
+
+        if ((i + 1) % 16 == 0)
+            msg[5] = '\n';
+
+        uart_write_str(msg);
+    }
+
+    uart_write('\n');
+}
+
 int main(void)
 {
     set_sysclk(72);
@@ -128,10 +146,12 @@ int main(void)
     buttons_init();
     pwm_init(880);
 
-    if (sd_init())
-        uart_write_str("SD successfully initialized!\n");
-    else
-        uart_write_str("SD failed to initialize.\n");
+    if (sd_init()) {
+        uart_write_str("SD successfully initialized!\n\n");
+        echo_sd_block(0); // Just a test to ensure we actually read a block
+    } else {
+        uart_write_str("SD failed to initialize.\n\n");
+    }
 
     display_init();
     show_splash();
