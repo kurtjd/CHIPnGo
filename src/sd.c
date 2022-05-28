@@ -275,10 +275,10 @@ static bool _wait_for_data_resp(void) {
     return ((resp >> 1) & 0x0F) == DATA_ACCEPTED;
 }
 
-static void _split_addr(uint32_t addr, uint8_t *buf) {
+static void _split_addr(uint32_t addr, uint8_t *buffer) {
     // Split addr into 4 argument bytes
     for (int i = 0; i < NUM_ARGS; i++)
-        buf[i] = (addr >> (24 - (i * 8))) & 0xFF;
+        buffer[i] = (addr >> (24 - (i * 8))) & 0xFF;
 }
 
 static void _read_block_data(uint8_t *buffer) {

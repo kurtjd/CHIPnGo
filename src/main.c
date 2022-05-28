@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include "sysclk.h"
 #include "clock.h"
 #include "gpio.h"
@@ -13,12 +14,19 @@
 
 // Emulator
 CHIP8 chip8;
-uint16_t pc_start_addr = PC_START_ADDR_DEFAULT;
+uint8_t metadata[SD_BLOCK_SIZE] = {0};
+char title[11];
 uint32_t cpu_freq = CPU_FREQ_DEFAULT;
 uint32_t timer_freq = TIMER_FREQ_DEFAULT;
 uint32_t refresh_freq = REFRESH_FREQ_DEFAULT;
+bool quirks[NUM_QUIRKS] = {0, 0, 0, 0, 0, 0, 0, 0};
+uint16_t BTN_LEFT_MAP = 0x90;
+uint16_t BTN_RIGHT_MAP = 0x240;
+uint16_t BTN_UP_MAP = 0x20;
+uint16_t BTN_DOWN_MAP = 0x100;
+uint16_t BTN_A_MAP = 0x00;
+uint16_t BTN_B_MAP = 0x40;
 bool play_sound = false;
-bool quirks[NUM_QUIRKS] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 
 // A basic splash screen that waits for user to press A
@@ -30,21 +38,45 @@ void show_splash(void) {
     while (!btn_released(BTN_A));
 }
 
+void btn_to_key(uint16_t btn_map, CHIP8K action) {
+    for (int i = 0; i < 16; i++) {
+        if (btn_map & 1)
+            chip8.keypad[i] = action;
+        btn_map >>= 1;
+    }
+}
+
 
 // Set up the emulator to begin running.
 bool init_emulator(void)
 {
-    chip8_init(&chip8, cpu_freq, timer_freq, refresh_freq, pc_start_addr,
+    chip8_init(&chip8, cpu_freq, timer_freq, refresh_freq, PC_START_ADDR_DEFAULT,
                 quirks);
     chip8_load_font(&chip8);
 
-    /* Load ROM into memory. */
-    if (!chip8_load_rom(&chip8))
-    {
-        return false;
-    }
-
     return true;
+}
+
+void load_rom(int rom_num) {
+    uint32_t start_sector = rom_num * 8;
+    sd_read_block(start_sector, metadata);
+    sd_read_blocks(start_sector + 1, chip8.RAM + PC_START_ADDR_DEFAULT, 7);
+}
+
+void process_metadata(void) {
+    if (metadata[0] == 0xC8) {
+        strcpy(title, (char *)(&metadata[1]));
+        cpu_freq = (metadata[12] << 24) | (metadata[13] << 16) | (metadata[14] << 8) | (metadata[15]);
+        timer_freq = metadata[16];
+        refresh_freq = metadata[17];
+        // quirks = lol
+        BTN_LEFT_MAP = (metadata[19] << 8) | (metadata[20]);
+        BTN_RIGHT_MAP = (metadata[21] << 8) | (metadata[22]);
+        BTN_UP_MAP = (metadata[23] << 8) | (metadata[24]);
+        BTN_DOWN_MAP = (metadata[25] << 8) | (metadata[26]);
+        BTN_A_MAP = (metadata[27] << 8) | (metadata[28]);
+        BTN_B_MAP = (metadata[29] << 8) | (metadata[30]);
+    }
 }
 
 // Makes the physical screen match the emulator display.
@@ -80,42 +112,31 @@ void handle_display(void)
 // Checks for key presses/releases and a quit event.
 void handle_input(void)
 {
-    // Do stuff with buttons here
-    if (btn_pressed(BTN_LEFT)) {
-        chip8.keypad[0x07] = KEY_DOWN;
-        chip8.keypad[0x04] = KEY_DOWN;
-    }
-    if (btn_pressed(BTN_UP)) {
-        chip8.keypad[0x05] = KEY_DOWN;
-    }
-    if (btn_pressed(BTN_DOWN)) {
-        chip8.keypad[0x08] = KEY_DOWN;
-    }
-    if (btn_pressed(BTN_RIGHT)) {
-        chip8.keypad[0x09] = KEY_DOWN;
-        chip8.keypad[0x06] = KEY_DOWN;
-    }
-    if (btn_pressed(BTN_B)) {
-        chip8.keypad[0x06] = KEY_DOWN;
-    }
+    if (btn_pressed(BTN_LEFT))
+        btn_to_key(BTN_LEFT_MAP, KEY_DOWN);
+    if (btn_pressed(BTN_UP))
+        btn_to_key(BTN_UP_MAP, KEY_DOWN);
+    if (btn_pressed(BTN_DOWN))
+        btn_to_key(BTN_DOWN_MAP, KEY_DOWN);
+    if (btn_pressed(BTN_RIGHT))
+        btn_to_key(BTN_RIGHT_MAP, KEY_DOWN);
+    if (btn_pressed(BTN_A))
+        btn_to_key(BTN_A_MAP, KEY_DOWN);
+    if (btn_pressed(BTN_B))
+        btn_to_key(BTN_B_MAP, KEY_DOWN);
 
-    if (btn_released(BTN_LEFT)) {
-        chip8.keypad[0x07] = KEY_UP;
-        chip8.keypad[0x04] = KEY_UP;
-    }
-    if (btn_released(BTN_UP)) {
-        chip8.keypad[0x05] = KEY_UP;
-    }
-    if (btn_released(BTN_DOWN)) {
-        chip8.keypad[0x08] = KEY_UP;
-    }
-    if (btn_released(BTN_RIGHT)) {
-        chip8.keypad[0x09] = KEY_UP;
-        chip8.keypad[0x06] = KEY_UP;
-    }
-    if (btn_released(BTN_B)) {
-        chip8.keypad[0x06] = KEY_UP;
-    }
+    if (btn_released(BTN_LEFT))
+        btn_to_key(BTN_LEFT_MAP, KEY_UP);
+    if (btn_released(BTN_UP))
+        btn_to_key(BTN_UP_MAP, KEY_UP);
+    if (btn_released(BTN_DOWN))
+        btn_to_key(BTN_DOWN_MAP, KEY_UP);
+    if (btn_released(BTN_RIGHT))
+        btn_to_key(BTN_RIGHT_MAP, KEY_UP);
+    if (btn_released(BTN_A))
+        btn_to_key(BTN_A_MAP, KEY_UP);
+    if (btn_released(BTN_B))
+        btn_to_key(BTN_B_MAP, KEY_UP);
 }
 
 void echo_sd_read(uint32_t addr) {
@@ -148,7 +169,6 @@ int main(void)
 
     if (sd_init()) {
         uart_write_str("SD successfully initialized!\n\n");
-        echo_sd_read(25088); // Just a test to ensure we actually read blocks
     } else {
         uart_write_str("SD failed to initialize.\n\n");
     }
@@ -156,6 +176,8 @@ int main(void)
     display_init();
     show_splash();
 
+    load_rom(0);
+    process_metadata();
     init_emulator();
     clock_start();
 

@@ -43,23 +43,17 @@ void chip8_reset(CHIP8 *chip8)
     chip8->exit = false;
     chip8->hires = false;
 
-    // S-CHIP did not initialize RAM (does it matter though?)
-    if (!chip8->quirks[0])
-    {
-        chip8_reset_RAM(chip8);
-    }
-
     chip8_reset_registers(chip8);
     chip8_reset_keypad(chip8);
     chip8_reset_display(chip8);
 }
 
-void chip8_soft_reset(CHIP8 *chip8)
+/*void chip8_soft_reset(CHIP8 *chip8)
 {
     chip8_reset(chip8);
     chip8_load_font(chip8);
     chip8_load_rom(chip8);
-}
+}*/
 
 void chip8_set_cpu_freq(CHIP8 *chip8, unsigned long cpu_freq)
 {
@@ -140,9 +134,9 @@ void chip8_load_font(CHIP8 *chip8)
     memcpy(chip8->RAM + FONT_START_ADDR, font_data, sizeof(font_data));
 }
 
-bool chip8_load_rom(CHIP8 *chip8)
+/*bool chip8_load_rom(CHIP8 *chip8)
 {
-    // Using a hardcoded ROM for now (Octopeg)
+    // Using a hardcoded ROM for nows
     static const uint8_t rom[] = {
         0x6E, 0x05, 0x65, 0x00, 0x6B, 0x06, 0x6A, 0x00, 0xA3, 0x0C, 0xDA, 0xB1, 0x7A, 0x04, 0x3A, 0x40, 
         0x12, 0x08, 0x7B, 0x02, 0x3B, 0x12, 0x12, 0x06, 0x6C, 0x20, 0x6D, 0x1F, 0xA3, 0x10, 0xDC, 0xD1, 
@@ -164,9 +158,9 @@ bool chip8_load_rom(CHIP8 *chip8)
         0xFC, 0x00, 0xAA, 0x00, 0x00, 0x00, 0x00, 0x00
     };
 
-    memcpy(chip8->RAM + chip8->pc_start_addr, rom, sizeof(rom));
+    memcpy(chip8->RAM + chip8->pc_start_addr, rom, MAX_RAM - chip8->pc_start_addr);
     return true;
-}
+}*/
 
 bool chip8_cycle(CHIP8 *chip8)
 {
