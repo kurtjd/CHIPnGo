@@ -10,6 +10,7 @@
 #include "display.h"
 #include "buttons.h"
 #include "pwm.h"
+#include "delay.h"
 #include "chip8.h"
 
 // Emulator
@@ -32,10 +33,11 @@ bool play_sound = false;
 // A basic splash screen that waits for user to press A
 void show_splash(void) {
     display_print(37, 2, "CHIP N GO");
-    display_print(20, 4, "PRESS A TO PLAY");
-    display_print(5, 7, "CREATED BY KURT");
+    //display_print(20, 4, "PRESS A TO PLAY");
+    display_print(20, 7, "CREATED BY KURT");
 
-    while (!btn_released(BTN_A));
+    //while (!btn_released(BTN_A));
+    delay(2000);
 }
 
 void btn_to_key(uint16_t btn_map, CHIP8K action) {
@@ -63,7 +65,7 @@ void load_rom(int rom_num) {
     sd_read_blocks(start_sector + 1, chip8.RAM + PC_START_ADDR_DEFAULT, 7);
 }
 
-void process_metadata(void) {
+bool process_metadata(void) {
     if (metadata[0] == 0xC8) {
         strcpy(title, (char *)(&metadata[1]));
         cpu_freq = (metadata[12] << 24) | (metadata[13] << 16) | (metadata[14] << 8) | (metadata[15]);
@@ -76,6 +78,40 @@ void process_metadata(void) {
         BTN_DOWN_MAP = (metadata[25] << 8) | (metadata[26]);
         BTN_A_MAP = (metadata[27] << 8) | (metadata[28]);
         BTN_B_MAP = (metadata[29] << 8) | (metadata[30]);
+
+        return true;
+    }
+
+    return false;
+}
+
+void select_rom(void) {
+    int rom_num = 0;
+
+    while (1) {
+        load_rom(rom_num);
+        if (!process_metadata()) {
+            rom_num = 0;
+            continue;
+        }
+        
+        display_clear();
+        display_print(37, 2, title);
+        display_print(20, 4, "PRESS A TO PLAY");
+
+        int next_rom = 0;
+        while (!next_rom) {
+            if (btn_released(BTN_A))
+                return;
+            else if (btn_released(BTN_RIGHT))
+                next_rom = 1;
+            else if (btn_released(BTN_LEFT))
+                next_rom = -1;
+        }
+
+        rom_num += next_rom;
+        if (rom_num < 0)
+            rom_num = 0;
     }
 }
 
@@ -176,8 +212,7 @@ int main(void)
     display_init();
     show_splash();
 
-    load_rom(0);
-    process_metadata();
+    select_rom();
     init_emulator();
     clock_start();
 
