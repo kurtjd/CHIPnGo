@@ -35,6 +35,7 @@
 #define CARD_IDLE 1
 #define CMD_OK 0
 #define RW_OK 0xFE
+#define DATA_ACCEPTED 2
 
 struct command {
     uint8_t cmd_bits;
@@ -90,6 +91,18 @@ const struct command STOP_TRANSMISSION = {
     0xFF
 };
 
+const struct command WRITE_BLOCK = {
+    24,
+    {0x00, 0x00, 0x00, 0x00}, // These will be replaced by addr bytes
+    0xFF
+};
+
+const struct command WRITE_MULTIPLE_BLOCK = {
+    25,
+    {0x00, 0x00, 0x00, 0x00}, // These will be replaced by addr bytes
+    0xFF
+};
+
 static void _gpio_init(void) {
     // Disable reset state
     GPIOB_CRH &= ~((1 << 18) | (1 << 22) | (1 << 30));
@@ -133,14 +146,23 @@ static void _spi_init2(void) {
     SPI2_CR1 |= (1 << 6); // Re-enable SPI
 }
 
+static void _sd_write(uint8_t data) {
+    SPI2_DR = data;
+    while (!(SPI2_SR & 0x02));
+}
+
+static uint8_t _sd_read(void) {
+    return SPI2_DR;
+}
+
 static void _dummy_write(int n) {
     for (int i = 0; i < n; i++)
-        sd_write(0xFF);
+        _sd_write(0xFF);
 }
 
 static void _rest(void) {
     // Wait until SD is sending out a constant high signal which means ready
-    while (sd_read() != 0xFF)
+    while (_sd_read() != 0xFF)
         _dummy_write(1);
 }
 
@@ -148,10 +170,10 @@ static uint8_t _read_R1(void) {
     /* Must keep writing until receive a valid response,
      * or 8 bytes have been written (max time a response can take)
      * We detect a valid response by looking for a 0 in the 8th bit */
-    uint8_t resp = sd_read();
+    uint8_t resp = _sd_read();
     for (int i = 0; i < READ_BYTE_DELAY && (resp & (1 << 7)); i++) {
         _dummy_write(1);
-        resp = sd_read();
+        resp = _sd_read();
     }
 
     return resp;
@@ -164,7 +186,7 @@ static const uint8_t* _read_R3(void) {
     resp[0] = _read_R1();
     for (int i = 1; i < NUM_R3_RESP_BYTES; i++) {
         _dummy_write(1);
-        resp[i] = sd_read();
+        resp[i] = _sd_read();
     }
 
     return resp;
@@ -185,19 +207,19 @@ static void _send_cmd(const struct command *cmd, const uint8_t *args) {
     _rest();
 
     // The full command byte must start with the start bits
-    sd_write(START_BITS | cmd->cmd_bits);
+    _sd_write(START_BITS | cmd->cmd_bits);
 
     // Send arguments
     // Use default arguments if none provided
     for (int i = 0; i < NUM_ARGS; i++) {
         if (args)
-            sd_write(args[i]);
+            _sd_write(args[i]);
         else
-            sd_write(cmd->args[i]);
+            _sd_write(cmd->args[i]);
     }
 
     // The full CRC byte must end with the stop bits
-    sd_write((cmd->crc << 1) | STOP_BITS);
+    _sd_write((cmd->crc << 1) | STOP_BITS);
 }
 
 static bool _reset(void) {
@@ -237,10 +259,20 @@ static bool _initialize(void) {
 }
 
 static bool _wait_for_data_token(uint8_t token) {
-    while (sd_read() != token)
+    while (_sd_read() != token)
         _dummy_write(1);
     
     return true; // Todo: Return false if timeout
+}
+
+static bool _wait_for_data_resp(void) {
+    uint8_t resp = _sd_read();
+    while (resp == 0xFF) {
+        _dummy_write(1);
+        resp = _sd_read();
+    }
+
+    return ((resp >> 1) & 0x0F) == DATA_ACCEPTED;
 }
 
 static void _split_addr(uint32_t addr, uint8_t *buf) {
@@ -255,11 +287,23 @@ static void _read_block_data(uint8_t *buffer) {
 
     for (int i = 0; i < SD_BLOCK_SIZE; i++) {
         _dummy_write(1);
-        buffer[i] = sd_read();
+        buffer[i] = _sd_read();
     }
 
     // Have to read the 2 byte CRC so send a couple dummy writes
     _dummy_write(2);
+}
+
+static bool _write_block_data(const uint8_t *buffer) {
+    _sd_write(RW_OK); // Send the packet start token
+
+    // Send all data bytes
+    for (int i = 0; i < SD_BLOCK_SIZE; i++)
+        _sd_write(buffer[i]);
+    
+    _sd_write(0xFF); // Send bogus CRC
+
+    return _wait_for_data_resp();
 }
 
 bool sd_init(void) {
@@ -284,15 +328,6 @@ bool sd_init(void) {
     // Reinitialize SPI with a much faster frequency and hardware CS
     _spi_init2();
     return true;
-}
-
-void sd_write(uint8_t data) {
-    SPI2_DR = data;
-    while (!(SPI2_SR & 0x02));
-}
-
-uint8_t sd_read(void) {
-    return SPI2_DR;
 }
 
 bool sd_inserted(void) {
@@ -322,4 +357,15 @@ void sd_read_blocks(uint32_t addr, uint8_t *buffer, int num_blocks) {
         _dummy_write(1); // Discard stuff byte
         _read_R1();
     }
+}
+
+bool sd_write_block(uint32_t addr, const uint8_t *buffer) {
+    uint8_t args[NUM_ARGS];
+    _split_addr(addr, args);
+
+    _send_cmd(&WRITE_BLOCK, args);
+    if (_read_R1() == CMD_OK)
+        return _write_block_data(buffer);
+
+    return false;
 }
