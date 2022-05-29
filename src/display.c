@@ -75,9 +75,18 @@ static const uint8_t ALPHA_FONT[][CHAR_WIDTH] = {
 
 static const uint8_t NO_CHAR[][CHAR_WIDTH] = {{0}};
 
-static const uint8_t* _char_to_bits(char c) {
-    c = toupper(c);
+static const uint8_t LEFT_ARROW[] = {0x00, 0x00, 0x04, 0x0E, 0x1F};
+static const uint8_t RIGHT_ARROW[] = {0x1F, 0x0E, 0x04, 0x00, 0x00};
 
+static const uint8_t* _char_to_bits(char c) {
+    switch (c) {
+    case '<':
+        return LEFT_ARROW;
+    case '>':
+        return RIGHT_ARROW;
+    }
+
+    c = toupper(c);
     if (c >= '0' && c <= '9') {
         return NUM_FONT[c - '0'];
     } else if (c >= 'A' && c <= 'Z') {

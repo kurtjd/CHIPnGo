@@ -17,10 +17,8 @@ Currently, I have basic drivers written for interfacing with peripherals such as
 - Battery power
 
 ## ToDo
-- Continue to improve display driver (currently seems a bit unstable)
-- Write SD driver
-- Add startup menu for user to select ROM via SD card, as well as configure options such as button mapping
-- Add ROM config file parser, in order to save configurations for certain ROMs to SD
+- Improve startup menu for user to select ROM via SD card
+- Improve startup splash screen
 - Add functionality for S-CHIP user flags to be saved to flash memory
 - Determine battery needs and get prototype running off battery
 - Add simple switch to turn console on/off
@@ -33,3 +31,6 @@ Although my original emulator also has full support for XO-CHIP roms, I decided 
 - XO-CHIP ROMs expect up to 64kb of memory, as opposed to 4kb expected by original CHIP-8 ROMs.
 - XO-CHIP supports up to three colors, which would mean needing to move beyond a simple monochrome display.
 - XO-CHIP supports variable frequencies/tones whereas CHIP-8 ROMs can only produce a single frequency, which makes handling sound simple.
+
+CHIP-8 supports 16 keys for input, however for design purposes, the console only has 6 buttons.
+However, most games only use a few buttons so this isn't too much of an issue.

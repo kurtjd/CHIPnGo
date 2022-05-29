@@ -32,12 +32,20 @@ bool play_sound = false;
 
 // A basic splash screen that waits for user to press A
 void show_splash(void) {
-    display_print(37, 2, "CHIP N GO");
+    delay(50);
+    display_print(37, 4, "CHIP N GO");
     //display_print(20, 4, "PRESS A TO PLAY");
-    display_print(20, 7, "CREATED BY KURT");
+    //display_print(20, 7, "CREATED BY KURT");
+
+    for (int i = 0; i < 10; i++) {
+        pwm_start();
+        delay(100);
+        pwm_stop();
+        delay(100);
+    }
 
     //while (!btn_released(BTN_A));
-    delay(2000);
+    //delay(2000);
 }
 
 void btn_to_key(uint16_t btn_map, CHIP8K action) {
@@ -45,6 +53,13 @@ void btn_to_key(uint16_t btn_map, CHIP8K action) {
         if (btn_map & 1)
             chip8.keypad[i] = action;
         btn_map >>= 1;
+    }
+}
+
+void parse_quirks(uint8_t q) {
+    for (int i = 0; i < 8; i++) {
+        quirks[i] = q & 1;
+        q >>= 1;
     }
 }
 
@@ -71,7 +86,7 @@ bool process_metadata(void) {
         cpu_freq = (metadata[12] << 24) | (metadata[13] << 16) | (metadata[14] << 8) | (metadata[15]);
         timer_freq = metadata[16];
         refresh_freq = metadata[17];
-        // quirks = lol
+        parse_quirks(metadata[18]);
         BTN_LEFT_MAP = (metadata[19] << 8) | (metadata[20]);
         BTN_RIGHT_MAP = (metadata[21] << 8) | (metadata[22]);
         BTN_UP_MAP = (metadata[23] << 8) | (metadata[24]);
@@ -96,19 +111,26 @@ void select_rom(void) {
         }
         
         display_clear();
-        display_print(37, 2, title);
-        display_print(20, 4, "PRESS A TO PLAY");
+        display_print(36 + ((10 - strlen(title)) * 2), 3, title);
+        display_print(2, 4, "<                   >");
+        display_print(19, 5, "PRESS A TO PLAY");
 
         int next_rom = 0;
         while (!next_rom) {
-            if (btn_released(BTN_A))
+            if (btn_released(BTN_A)) {
+                pwm_start();
+                delay(500);
+                pwm_stop();
                 return;
-            else if (btn_released(BTN_RIGHT))
+            } else if (btn_released(BTN_RIGHT))
                 next_rom = 1;
             else if (btn_released(BTN_LEFT))
                 next_rom = -1;
         }
 
+        pwm_start();
+        delay(1);
+        pwm_stop();
         rom_num += next_rom;
         if (rom_num < 0)
             rom_num = 0;
@@ -162,17 +184,17 @@ void handle_input(void)
         btn_to_key(BTN_B_MAP, KEY_DOWN);
 
     if (btn_released(BTN_LEFT))
-        btn_to_key(BTN_LEFT_MAP, KEY_UP);
+        btn_to_key(BTN_LEFT_MAP, KEY_RELEASED);
     if (btn_released(BTN_UP))
-        btn_to_key(BTN_UP_MAP, KEY_UP);
+        btn_to_key(BTN_UP_MAP, KEY_RELEASED);
     if (btn_released(BTN_DOWN))
-        btn_to_key(BTN_DOWN_MAP, KEY_UP);
+        btn_to_key(BTN_DOWN_MAP, KEY_RELEASED);
     if (btn_released(BTN_RIGHT))
-        btn_to_key(BTN_RIGHT_MAP, KEY_UP);
+        btn_to_key(BTN_RIGHT_MAP, KEY_RELEASED);
     if (btn_released(BTN_A))
-        btn_to_key(BTN_A_MAP, KEY_UP);
+        btn_to_key(BTN_A_MAP, KEY_RELEASED);
     if (btn_released(BTN_B))
-        btn_to_key(BTN_B_MAP, KEY_UP);
+        btn_to_key(BTN_B_MAP, KEY_RELEASED);
 }
 
 void echo_sd_read(uint32_t addr) {

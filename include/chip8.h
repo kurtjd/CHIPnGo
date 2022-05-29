@@ -13,7 +13,7 @@
 #define NUM_KEYS 16
 #define NUM_REGISTERS 16
 #define NUM_USER_FLAGS 16
-#define NUM_QUIRKS 9
+#define NUM_QUIRKS 8
 #define NUM_FONT_BYTES 80
 #define NUM_BIG_FONT_BYTES 160
 
@@ -77,15 +77,14 @@ typedef struct CHIP8
 
     // Flags for the various quirky behavior of S-CHIP
     /* Quirks:
-        -0: RAM Initialization
-        -1: 8xy6/8xyE
-        -2: Fx55/Fx65
-        -3: Bnnn
-        -4: Big Sprite LORES
-        -5: 00FE/00FF
-        -6: Sprite Wrapping
-        -7: Collision Enumeration
-        -8: Collision with Bottom of Screen
+        -0: 8xy6/8xyE
+        -1: Fx55/Fx65
+        -2: Bnnn
+        -3: Big Sprite LORES
+        -4: 00FE/00FF
+        -5: Sprite Wrapping
+        -6: Collision Enumeration
+        -7: Collision with Bottom of Screen
     */
     bool quirks[NUM_QUIRKS];
 
