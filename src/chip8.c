@@ -1,11 +1,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include "clock.h"
+#include "sd.h"
 #include "chip8.h"
 
 void chip8_init(CHIP8 *chip8, unsigned long cpu_freq, unsigned long timer_freq,
                 unsigned long refresh_freq, uint16_t pc_start_addr,
-                bool quirks[])
+                bool quirks[], uint8_t *metadata, uint8_t rom_num)
 {
     // Seed for the RND instruction.
     srand(69);
@@ -22,6 +23,9 @@ void chip8_init(CHIP8 *chip8, unsigned long cpu_freq, unsigned long timer_freq,
     chip8->pc_start_addr = pc_start_addr;
 
     chip8_reset(chip8);
+
+    chip8->metadata = metadata;
+    chip8->rom_num = rom_num;
 }
 
 void chip8_reset(CHIP8 *chip8)
@@ -611,6 +615,7 @@ void chip8_execute(CHIP8 *chip8)
                         chip8->UF_path);
             }*/
 
+            chip8_handle_user_flags(chip8, x + 1, true);
             break;
 
         /* LD V0..Vx, uflags_disk (Fx85) (S-CHIP Only)
@@ -622,6 +627,7 @@ void chip8_execute(CHIP8 *chip8)
                         chip8->UF_path);
             }*/
 
+            chip8_handle_user_flags(chip8, x + 1, false);
             break;
         }
 
@@ -910,8 +916,27 @@ void chip8_wait_key(CHIP8 *chip8, uint8_t x)
 
 bool chip8_handle_user_flags(CHIP8 *chip8, int num_flags, bool save)
 {
-    // Maybe use eeprom for this
-    return true;
+    if (num_flags <= NUM_USER_FLAGS)
+    {
+        if (save) {
+            memcpy(&chip8->metadata[USER_FLAGS_IDX], chip8->V, num_flags);
+            sd_write_block(chip8->rom_num * 8, chip8->metadata);
+        } else {
+            /* Look for a 'signature' of DEADBEEF to check if flags have ever
+             * actually been saved before reading them in. */
+            if (chip8->metadata[USER_FLAGS_IDX]        != 0xDE
+                || chip8->metadata[USER_FLAGS_IDX + 1] != 0xAD
+                || chip8->metadata[USER_FLAGS_IDX + 2] != 0xBE
+                || chip8->metadata[USER_FLAGS_IDX + 3] != 0xEF)
+                memcpy(chip8->V, &chip8->metadata[USER_FLAGS_IDX], num_flags);
+        }
+    }
+    else
+    {
+        return true; // Only return false on file open error.
+    }
+
+    return false;
 }
 
 void chip8_skip_instr(CHIP8 *chip8)

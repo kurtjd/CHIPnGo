@@ -29,6 +29,8 @@
 #define REFRESH_FREQ_DEFAULT 30
 #define TIMER_FREQ_DEFAULT 60
 
+#define USER_FLAGS_IDX 31
+
 // The states each key of the keypad can be in.
 typedef enum
 {
@@ -99,12 +101,16 @@ typedef struct CHIP8
 
     // Used to toggle between HI-RES and standard LO-RES modes.
     bool hires;
+
+    // Mainly for reading/writing userflags
+    uint8_t *metadata;
+    uint8_t rom_num;
 } CHIP8;
 
 // Set some things to useful default values.
 void chip8_init(CHIP8 *chip8, unsigned long cpu_freq, unsigned long timer_freq,
                 unsigned long refresh_freq, uint16_t pc_start_addr,
-                bool quirks[]);
+                bool quirks[], uint8_t *metadata, uint8_t rom_num);
 
 // Reset the machine.
 void chip8_reset(CHIP8 *chip8);

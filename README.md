@@ -6,7 +6,8 @@
 Recently I've taken a serious interest in embedded development, so I decided for my first project I would attempt to port my [CHIP-8 emulator](https://github.com/kurtjd/jaxe) to a STM32 microcontroller in order to eventually build a CHIP-8 hand-held gaming console. Since this is being done as a learning experience, I also decided I would do this bare-metal with no libraries and write all drivers from scratch. While this is proving to be slow and extremely frustrating at times, it has also been very insightful and I've already learned a ton in such a short time.
 
 ## Progress
-Currently, I have basic drivers written for interfacing with peripherals such as the system clock, GPIO, and UART. I have also begun making a basic prototype on a breadboard. The driver for the display has been written but is not very stable, so next steps are to work on that then move onto writing an SD driver.
+All drivers are now mostly complete, just might make some small tweaks. Focusing now on improving the boot up splash/rom selection menu to make it cooler. 
+Also plan to create a Python tool to easily add/remove and configure ROMs on a 'game catridge' (well, really just an SD card).
 
 ## Planned Features
 - Fully support all CHIP-8 and S-CHIP ROMs
@@ -17,11 +18,10 @@ Currently, I have basic drivers written for interfacing with peripherals such as
 - Battery power
 
 ## ToDo
-- Improve startup menu for user to select ROM via SD card
-- Improve startup splash screen
-- Add functionality for S-CHIP user flags to be saved to flash memory
+- Improve startup menu for user to select ROM via SD card (make a bit more pretty)
+- Improve startup splash screen (want something cool and animated)
 - Determine battery needs and get prototype running off battery
-- Add simple switch to turn console on/off
+- Add switches to turn console on/off, enable/disable backlight, and enable/disable sound
 - Perform extensive testing on breadboard prototype
 - Learn PCB design and create custom PCB
 - Create simple case for PCB

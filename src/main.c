@@ -28,6 +28,7 @@ uint16_t BTN_DOWN_MAP = 0x100;
 uint16_t BTN_A_MAP = 0x00;
 uint16_t BTN_B_MAP = 0x40;
 bool play_sound = false;
+int rom_num = 0;
 
 
 // A basic splash screen that waits for user to press A
@@ -68,7 +69,7 @@ void parse_quirks(uint8_t q) {
 bool init_emulator(void)
 {
     chip8_init(&chip8, cpu_freq, timer_freq, refresh_freq, PC_START_ADDR_DEFAULT,
-                quirks);
+                quirks, metadata, rom_num);
     chip8_load_font(&chip8);
 
     return true;
@@ -83,10 +84,13 @@ void load_rom(int rom_num) {
 bool process_metadata(void) {
     if (metadata[0] == 0xC8) {
         strcpy(title, (char *)(&metadata[1]));
+
         cpu_freq = (metadata[12] << 24) | (metadata[13] << 16) | (metadata[14] << 8) | (metadata[15]);
         timer_freq = metadata[16];
         refresh_freq = metadata[17];
+
         parse_quirks(metadata[18]);
+
         BTN_LEFT_MAP = (metadata[19] << 8) | (metadata[20]);
         BTN_RIGHT_MAP = (metadata[21] << 8) | (metadata[22]);
         BTN_UP_MAP = (metadata[23] << 8) | (metadata[24]);
@@ -101,8 +105,6 @@ bool process_metadata(void) {
 }
 
 void select_rom(void) {
-    int rom_num = 0;
-
     while (1) {
         load_rom(rom_num);
         if (!process_metadata()) {
@@ -220,16 +222,16 @@ int main(void)
     gpio_init(GPIOA);
     gpio_init(GPIOB);
 
-    uart_init(9600);
-
     buttons_init();
     pwm_init(880);
 
+    /*uart_init(9600);
     if (sd_init()) {
         uart_write_str("SD successfully initialized!\n\n");
     } else {
         uart_write_str("SD failed to initialize.\n\n");
-    }
+    }*/
+    sd_init();
 
     display_init();
     show_splash();
