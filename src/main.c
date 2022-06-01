@@ -109,13 +109,13 @@ bool process_metadata(void) {
 // Very slow... but functional for now
 void seek_rom(int dir) {
     do {
-        load_rom(rom_num);
-        rom_num += dir;
-
         if (rom_num >= MAX_ROMS)
             rom_num = 0;
         else if (rom_num < 0)
             rom_num = MAX_ROMS - 1;
+
+        load_rom(rom_num);
+        rom_num += dir;
     } while (!process_metadata());
 
     rom_num -= dir;
