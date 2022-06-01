@@ -13,7 +13,9 @@
 #include "delay.h"
 #include "chip8.h"
 
-// Emulator
+#define MAX_ROMS 25
+
+// Emulator (TODO: Put this all in struct)
 CHIP8 chip8;
 uint8_t metadata[SD_BLOCK_SIZE] = {0};
 char title[11];
@@ -104,38 +106,49 @@ bool process_metadata(void) {
     return false;
 }
 
-void select_rom(void) {
-    while (1) {
+// Very slow... but functional for now
+void seek_rom(int dir) {
+    do {
         load_rom(rom_num);
-        if (!process_metadata()) {
+        rom_num += dir;
+
+        if (rom_num >= MAX_ROMS)
             rom_num = 0;
-            continue;
-        }
+        else if (rom_num < 0)
+            rom_num = MAX_ROMS - 1;
+    } while (!process_metadata());
+
+    rom_num -= dir;
+}
+
+void select_rom(void) {
+    int scan_dir = 1;
+
+    while (1) {
+        seek_rom(scan_dir);
         
         display_clear();
         display_print(36 + ((10 - strlen(title)) * 2), 3, title);
         display_print(2, 4, "<                   >");
         display_print(19, 5, "PRESS A TO PLAY");
 
-        int next_rom = 0;
-        while (!next_rom) {
+        scan_dir = 0;
+        while (!scan_dir) {
             if (btn_released(BTN_A)) {
                 pwm_start();
                 delay(500);
                 pwm_stop();
                 return;
             } else if (btn_released(BTN_RIGHT))
-                next_rom = 1;
+                scan_dir = 1;
             else if (btn_released(BTN_LEFT))
-                next_rom = -1;
+                scan_dir = -1;
         }
-
+        rom_num += scan_dir;
+        
         pwm_start();
         delay(1);
         pwm_stop();
-        rom_num += next_rom;
-        if (rom_num < 0)
-            rom_num = 0;
     }
 }
 
