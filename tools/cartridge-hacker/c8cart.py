@@ -115,6 +115,7 @@ def save_game(sender, data, input):
     metadata += down_map
     metadata += a_map
     metadata += b_map
+    metadata += bytes([0xDE, 0xAD, 0xBE, 0xEF])
 
     sd = open(SD_PATH, 'rb+')
     sd.seek(rom_num * (SD_BLOCK_SIZE * 8))
