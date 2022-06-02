@@ -1,4 +1,4 @@
 .pio
 .vscode
 platformio.ini
-tools/cartridge-hacker/env
+tools/cartridge8/env
