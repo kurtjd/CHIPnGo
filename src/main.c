@@ -108,7 +108,9 @@ bool process_metadata(void) {
 }
 
 // Very slow... but functional for now
-void seek_rom(int dir) {
+bool seek_rom(int dir) {
+    int attempts = 0;
+
     do {
         if (rom_num >= MAX_ROMS)
             rom_num = 0;
@@ -117,17 +119,24 @@ void seek_rom(int dir) {
 
         load_rom(rom_num);
         rom_num += dir;
-    } while (!process_metadata());
 
-    rom_num -= dir;
+        attempts++;
+    } while (attempts <= MAX_ROMS && !process_metadata());
+
+    if (attempts <= MAX_ROMS) {
+        rom_num -= dir;
+        return true;
+    }
+
+    // No ROM exists if we attempted to find a ROM more than MAX_ROMS times
+    return false;
 }
 
 void select_rom(void) {
     int scan_dir = 1;
+    bool rom_exists = seek_rom(scan_dir);
 
-    while (1) {
-        seek_rom(scan_dir);
-        
+    while (rom_exists) {
         display_clear();
         display_print(36 + ((10 - strlen(title)) * 2), 3, title);
         display_print(2, 4, "<                   >");
@@ -150,7 +159,15 @@ void select_rom(void) {
         pwm_start();
         delay(1);
         pwm_stop();
+
+        rom_exists = seek_rom(scan_dir);
     }
+
+    // No ROM exists on game cartridge
+    // Just hang since no way to recover
+    display_clear();
+    display_print(25, 4, "ROM NOT FOUND");
+    while(1);
 }
 
 // Makes the physical screen match the emulator display.
