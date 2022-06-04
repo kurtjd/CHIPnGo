@@ -1,14 +1,3 @@
-// TODO: Handle multiple types of SD cards
-/* Ideas:
- * -8 512kb sectors are used to store actual ROM data
- * -Then a 9th sector is used to store metadata about ROM, such as config
- * -9th sector can also hold user flags
- * -Metadata sector will appear first before ROM data
- * -Create Python program to add/remove ROMs from SD and change config
- * -Use dearpygui for GUI?
- * -Erase ROM by shifting all ROMS left 9 sectors
- */
-
 #include <stdlib.h>
 #include "sd.h"
 #include "gpio.h"
@@ -36,6 +25,7 @@
 #define CMD_OK 0
 #define RW_OK 0xFE
 #define DATA_ACCEPTED 2
+#define INIT_MAX_ATTEMPTS 100
 
 struct command {
     uint8_t cmd_bits;
@@ -245,11 +235,16 @@ static bool _initialize(void) {
     /* The below sequence begins the SD initilization process.
      * It must be repeated until R1 returns 0
      * (signifying SD is no longer idle and ready to accept all commands) */
+    int attempts = 0;
     do {
         _send_cmd(&APP_CMD, NULL);
         _read_R1();
         _send_cmd(&SD_SEND_OP_COND, NULL);
-    } while (_read_R1() == CARD_IDLE); // Should implement timeout just in case
+        attempts++;
+    } while (attempts < INIT_MAX_ATTEMPTS && _read_R1() == CARD_IDLE);
+
+    if (attempts >= INIT_MAX_ATTEMPTS)
+        return false;
 
     _send_cmd(&READ_OCR, NULL);
 
