@@ -35,7 +35,6 @@ int rom_num = 0;
 
 // A basic splash screen that waits for user to press A
 void show_splash(void) {
-    delay(50);
     display_print(37, 4, "CHIP N GO");
     //display_print(20, 4, "PRESS A TO PLAY");
     //display_print(20, 7, "CREATED BY KURT");
@@ -46,6 +45,8 @@ void show_splash(void) {
         pwm_stop();
         delay(100);
     }
+
+    display_clear();
 
     //while (!btn_released(BTN_A));
     //delay(2000);
@@ -229,6 +230,25 @@ void echo_sd_read(uint32_t addr) {
     uart_write('\n');
 }
 
+void handle_sd() {
+    // Wait for user to insert SD card
+    if (!sd_inserted()) {
+        display_print(2, 4, "INSERT GAME CARTRIDGE");
+        while(!sd_inserted());
+
+        // Wait briefly for SD to be fully inserted
+        display_clear();
+        delay(100);
+    }
+
+    // Can't recover so just hang and tell the user to restart
+    if (!sd_init()) {
+        display_print(5, 3, "GAME CARTRIDGE ERROR");
+        display_print(22, 4, "PLEASE RESTART");
+        while(1);
+    }
+}
+
 int main(void)
 {
     set_sysclk(72);
@@ -238,18 +258,12 @@ int main(void)
     buttons_init();
     pwm_init(880);
 
-    /*uart_init(9600);
-    if (sd_init()) {
-        uart_write_str("SD successfully initialized!\n\n");
-    } else {
-        uart_write_str("SD failed to initialize.\n\n");
-    }*/
-    sd_init();
-
     display_init();
     show_splash();
 
+    handle_sd();
     select_rom();
+
     init_emulator();
     clock_start();
 
