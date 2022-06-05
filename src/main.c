@@ -12,6 +12,7 @@
 #include "pwm.h"
 #include "delay.h"
 #include "chip8.h"
+#include "led.h"
 
 #define MAX_ROMS 25
 
@@ -146,7 +147,8 @@ void select_rom(void) {
         while (!scan_dir) {
             if (btn_released(BTN_A)) {
                 pwm_start();
-                delay(500);
+                //delay(500);
+                for (volatile uint32_t i = 0; i < 5000000; i++);
                 pwm_stop();
                 return;
             } else if (btn_released(BTN_RIGHT))
@@ -157,7 +159,8 @@ void select_rom(void) {
         rom_num += scan_dir;
         
         pwm_start();
-        delay(1);
+        //delay(1);
+        for (volatile uint32_t i = 0; i < 100000; i++);
         pwm_stop();
 
         rom_exists = seek_rom(scan_dir);
@@ -269,20 +272,22 @@ void handle_sd() {
 int main(void)
 {
     set_sysclk(72);
+
     gpio_init(GPIOA);
     gpio_init(GPIOB);
+    led_enable();
 
-    buttons_init();
     pwm_init(880);
 
     display_init();
     show_splash();
-
     handle_sd();
-    select_rom();
 
-    init_emulator();
     clock_start();
+    buttons_init();
+    select_rom();
+    init_emulator();
+    //clock_start();
 
     while (1)
     {

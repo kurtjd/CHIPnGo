@@ -15,6 +15,7 @@ void led_enable(void) {
     RCC_APB2ENR |= GPIOC_CLK;
     GPIOC_CRH &= 0xFF0FFFFF;
     GPIOC_CRH |= 0x00200000;
+    led_off();
 }
 
 void led_on(void) {

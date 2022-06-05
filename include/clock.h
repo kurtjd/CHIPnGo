@@ -5,5 +5,6 @@
 
 void clock_start(void);
 uint32_t clock_get(void);
+void clock_restart(void);
 
 #endif

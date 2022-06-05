@@ -1,3 +1,5 @@
+// TODO: Use timer instead of systick
+
 #include <stdint.h>
 #include "systick.h"
 #include "clock.h"
@@ -17,4 +19,8 @@ void clock_start(void) {
 
 uint32_t clock_get(void) {
 	return clock;
+}
+
+void clock_restart(void) {
+	clock = 0;
 }
