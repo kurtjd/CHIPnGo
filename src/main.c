@@ -147,8 +147,7 @@ void select_rom(void) {
         while (!scan_dir) {
             if (btn_released(BTN_A)) {
                 pwm_start();
-                //delay(500);
-                for (volatile uint32_t i = 0; i < 5000000; i++);
+                delay(500);
                 pwm_stop();
                 return;
             } else if (btn_released(BTN_RIGHT))
@@ -159,8 +158,7 @@ void select_rom(void) {
         rom_num += scan_dir;
         
         pwm_start();
-        //delay(1);
-        for (volatile uint32_t i = 0; i < 100000; i++);
+        delay(1);
         pwm_stop();
 
         rom_exists = seek_rom(scan_dir);
@@ -281,13 +279,14 @@ int main(void)
 
     display_init();
     show_splash();
+    
     handle_sd();
 
-    clock_start();
     buttons_init();
+
+    clock_start();
     select_rom();
     init_emulator();
-    //clock_start();
 
     while (1)
     {

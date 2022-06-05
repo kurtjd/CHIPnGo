@@ -43,7 +43,7 @@
 #define BTN_A_MODE_FI     (1 << 2)
 #define BTN_B_MODE_FI     (1 << 6)
 
-#define BOUNCE_WAIT 0 // WTF
+#define BOUNCE_WAIT 10 // Spec says 5ms max but really need twice that
 
 
 static int btn_status[NUM_BUTTONS] = {0};
@@ -65,8 +65,7 @@ static void _update_status(enum Button btn) {
 
 
 static void _btn_interrupt(void) {
-    /* For some reason 0 bounce wait works best, but occasionally still
-     * a button press doesn't get recognized. */
+    // Wait for bounce to settle
     if ((clock_get() - last_press) > BOUNCE_WAIT) {
         // Find pin that generated interrupt
         int pin = 0;
@@ -81,9 +80,6 @@ static void _btn_interrupt(void) {
 
         last_press = clock_get();
     }
-    //EXTI_PR |= (1 << btn);
-
-    //EXTI_PR |= (0xFFFFF);
 }
 
 
