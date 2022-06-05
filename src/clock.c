@@ -29,15 +29,16 @@ void clock_start(void) {
 	TIM2_DIER |= 1;
 
 	/* We want overflow to happen every second.
-	 * Since the actual clock speed in MHz wouldn't fit in the ARR buffer,
-	 * We divide the clock by 1000. That way, we can fit the clock speed
-	 * in the ARR buffer and it overflows every second. */
-	TIM2_PSC = 1000;
-	TIM2_ARR = APB1_CLOCK_SPEED / 1000;
+	 * So we scale the clock in a way that it becomes a 1KHz clock
+	 * We then set the ARR to 1000, so an interrupt is
+	 * generated every second.*/
+	TIM2_PSC = APB1_CLOCK_SPEED / 1000;
+	TIM2_ARR = 1000;
 
 	TIM2_CR1 |= 1; // Finally enable timer
 }
 
 uint32_t clock_get(void) {
-	return elapsed_ms + (TIM2_CNT / (APB1_CLOCK_SPEED / 1000000));
+	// Return ms count plus whats still in the counter
+	return elapsed_ms + TIM2_CNT;
 }
