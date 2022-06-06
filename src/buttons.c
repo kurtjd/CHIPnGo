@@ -1,7 +1,5 @@
 #include "buttons.h"
 
-#include <stdbool.h>
-
 #include "clock.h"
 #include "gpio.h"
 #include "led.h"

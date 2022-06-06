@@ -1,6 +1,8 @@
 #ifndef BUTTONS_H
 #define BUTTONS_H
 
+#include <stdbool.h>
+
 #define NUM_BUTTONS 6
 
 enum Button {
