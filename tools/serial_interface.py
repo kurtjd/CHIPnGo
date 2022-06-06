@@ -53,15 +53,11 @@ white = 255, 255, 255
 screen = pygame.display.set_mode(size)
 
 font = pygame.font.SysFont(None, 24)
-img = font.render('Press any key', True, white)
+img = font.render("Press any key", True, white)
 screen.blit(img, (10, 20))
 pygame.display.flip()
 
-jaxe = serial.Serial(
-    port='/dev/ttyUSB0',
-    baudrate=500000,
-    timeout=0.1
-)
+jaxe = serial.Serial(port="/dev/ttyUSB0", baudrate=500000, timeout=0.1)
 
 while 1:
     handle_input()

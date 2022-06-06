@@ -1,8 +1,8 @@
 #ifndef SD_H
 #define SD_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #define SD_BLOCK_SIZE 512
 

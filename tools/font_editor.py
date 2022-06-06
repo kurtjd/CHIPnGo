@@ -13,8 +13,11 @@ def draw_grid():
 def draw_bmp():
     for i, row in enumerate(bmp):
         for j, col in enumerate(row):
-            pygame.draw.rect(screen, white if col else black,
-                             pygame.Rect(j * 100, i * 100, 100, 100))
+            pygame.draw.rect(
+                screen,
+                white if col else black,
+                pygame.Rect(j * 100, i * 100, 100, 100),
+            )
 
 
 def flip_pixel(pos):
@@ -25,19 +28,19 @@ def flip_pixel(pos):
 
 
 def print_hex():
-    print('{', end='')
+    print("{", end="")
 
     for j in range(len(bmp[0])):
-        bstr = '000'
+        bstr = "000"
         for i in reversed(range(len(bmp))):
             bstr += str(bmp[i][j])
 
-        print(f'0x{int(bstr, 2):02X}', end='')
+        print(f"0x{int(bstr, 2):02X}", end="")
 
         if j < len(bmp[0]) - 1:
-            print(', ', end='')
+            print(", ", end="")
 
-    print('},')
+    print("},")
 
 
 def handle_input():
@@ -62,7 +65,7 @@ bmp = [
     [0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0]
+    [0, 0, 0, 0, 0],
 ]
 
 print("\n\n\n")

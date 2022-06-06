@@ -1,15 +1,16 @@
-#include <stdint.h>
 #include "led.h"
 
-#define RCC         0x40021000
-#define GPIOC       0x40011000
+#include <stdint.h>
 
-#define GPIOC_CLK   0x10
-#define LED_PIN     0x2000
+#define RCC 0x40021000
+#define GPIOC 0x40011000
+
+#define GPIOC_CLK 0x10
+#define LED_PIN 0x2000
 
 #define RCC_APB2ENR (*((volatile uint32_t *)(RCC + 0x18)))
-#define GPIOC_CRH   (*((volatile uint32_t *)(GPIOC + 0x04)))
-#define GPIOC_ODR   (*((volatile uint32_t *)(GPIOC + 0x0C)))
+#define GPIOC_CRH (*((volatile uint32_t *)(GPIOC + 0x04)))
+#define GPIOC_ODR (*((volatile uint32_t *)(GPIOC + 0x0C)))
 
 void led_enable(void) {
     RCC_APB2ENR |= GPIOC_CLK;

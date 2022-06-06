@@ -5,26 +5,26 @@
  * Therefore, the duty cycle is always 50% and the frequency is set only once
  * Two functions exist to either start or stop the pulse
  */
-#include "gpio.h"
-#include "sysclk.h"
 #include "pwm.h"
 
-#define TIM3_START  0x40000400
-#define TIM3_CR1    (*((volatile uint32_t *)(TIM3_START + 0x00)))
-#define TIM3_PSC    (*((volatile uint32_t *)(TIM3_START + 0x28)))
-#define TIM3_ARR    (*((volatile uint32_t *)(TIM3_START + 0x2C)))
-#define TIM3_CCMR2  (*((volatile uint32_t *)(TIM3_START + 0x1C)))
-#define TIM3_CCR4   (*((volatile uint32_t *)(TIM3_START + 0x40)))
-#define TIM3_CCER   (*((volatile uint32_t *)(TIM3_START + 0x20)))
+#include "gpio.h"
+#include "sysclk.h"
+
+#define TIM3_START 0x40000400
+#define TIM3_CR1 (*((volatile uint32_t *)(TIM3_START + 0x00)))
+#define TIM3_PSC (*((volatile uint32_t *)(TIM3_START + 0x28)))
+#define TIM3_ARR (*((volatile uint32_t *)(TIM3_START + 0x2C)))
+#define TIM3_CCMR2 (*((volatile uint32_t *)(TIM3_START + 0x1C)))
+#define TIM3_CCR4 (*((volatile uint32_t *)(TIM3_START + 0x40)))
+#define TIM3_CCER (*((volatile uint32_t *)(TIM3_START + 0x20)))
 
 #define TIM3EN 0x02
 #define GPIOB_TIM3_MODE (1 << 5)
 #define GPIOB_TIM3_CONF (1 << 7)
-#define PWM_MODE_2      (0x07 << 12)
-#define CC4E            (1 << 12)
+#define PWM_MODE_2 (0x07 << 12)
+#define CC4E (1 << 12)
 
-#define PSC 10 // Chosen so the ARR wouldn't overflow its register and just nice
-
+#define PSC 10  // Chosen so the ARR wouldn't overflow its register and just nice
 
 // Configure port b pin 1 as alternate function output push-pull
 static void _gpio_init(void) {

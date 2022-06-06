@@ -1,11 +1,13 @@
-#include <stdbool.h>
-#include "gpio.h"
-#include "clock.h"
 #include "buttons.h"
+
+#include <stdbool.h>
+
+#include "clock.h"
+#include "gpio.h"
 #include "led.h"
 
-#define NVIC        0xE000E100
-#define NVIC_ISER0  (*((volatile uint32_t *)(NVIC + 0x00)))
+#define NVIC 0xE000E100
+#define NVIC_ISER0 (*((volatile uint32_t *)(NVIC + 0x00)))
 
 #define EXTI 0x40010400
 #define EXTI_IMR (*((volatile uint32_t *)(EXTI + 0x00)))
@@ -27,32 +29,30 @@
 #define BTN_A_INT_EXTI (1 << 8)
 #define BTN_B_INT_EXTI (1 << 9)
 
-#define BTN_LEFT_MODE_PU  (1 << 19)
-#define BTN_UP_MODE_PU    (1 << 23)
-#define BTN_DOWN_MODE_PU  (1 << 27)
+#define BTN_LEFT_MODE_PU (1 << 19)
+#define BTN_UP_MODE_PU (1 << 23)
+#define BTN_DOWN_MODE_PU (1 << 27)
 #define BTN_RIGHT_MODE_PU (1 << 31)
 
-#define BTN_A_MODE_PU     (1 << 3)
-#define BTN_B_MODE_PU     (1 << 7)
+#define BTN_A_MODE_PU (1 << 3)
+#define BTN_B_MODE_PU (1 << 7)
 
-#define BTN_LEFT_MODE_FI  (1 << 18)
-#define BTN_UP_MODE_FI    (1 << 22)
-#define BTN_DOWN_MODE_FI  (1 << 26)
+#define BTN_LEFT_MODE_FI (1 << 18)
+#define BTN_UP_MODE_FI (1 << 22)
+#define BTN_DOWN_MODE_FI (1 << 26)
 #define BTN_RIGHT_MODE_FI (1 << 30)
 
-#define BTN_A_MODE_FI     (1 << 2)
-#define BTN_B_MODE_FI     (1 << 6)
+#define BTN_A_MODE_FI (1 << 2)
+#define BTN_B_MODE_FI (1 << 6)
 
-#define BOUNCE_WAIT 10 // Spec says 5ms max but really need twice that
-
+#define BOUNCE_WAIT 10  // Spec says 5ms max but really need twice that
 
 static int btn_status[NUM_BUTTONS] = {0};
 static uint32_t last_press = 0;
 
 static bool _btn_pressed_raw(enum Button btn) {
-    return !(GPIOB_IDR & (1 << btn)); // Active-low logic
+    return !(GPIOB_IDR & (1 << btn));  // Active-low logic
 }
-
 
 static void _update_status(enum Button btn) {
     int idx = btn - BTN_LEFT;
@@ -62,7 +62,6 @@ static void _update_status(enum Button btn) {
     else if (btn_status[idx] == 1)
         btn_status[idx] = 2;
 }
-
 
 static void _btn_interrupt(void) {
     // Wait for bounce to settle
@@ -76,12 +75,11 @@ static void _btn_interrupt(void) {
         }
 
         EXTI_PR |= (1 << pin);
-        _update_status(pin); // Pin maps to a Button
+        _update_status(pin);  // Pin maps to a Button
 
         last_press = clock_get();
     }
 }
-
 
 void EXTI4_IRQHandler() {
     _btn_interrupt();
@@ -90,7 +88,6 @@ void EXTI4_IRQHandler() {
 void EXTI9_5_IRQHandler() {
     _btn_interrupt();
 }
-
 
 void buttons_init(void) {
     // Clear floating input bits (which are set to 1 at reset)
@@ -103,7 +100,7 @@ void buttons_init(void) {
     GPIOB_CRL |= (BTN_DOWN_MODE_PU | BTN_RIGHT_MODE_PU);
     GPIOB_CRH |= (BTN_A_MODE_PU | BTN_B_MODE_PU);
 
-    GPIOB_ODR |= 0x3F0; // Activate pull-up resistor
+    GPIOB_ODR |= 0x3F0;  // Activate pull-up resistor
 
     // AFSIO EXTI set to port B
     RCC_APB2ENR |= 1;
@@ -132,7 +129,7 @@ bool btn_pressed(enum Button btn) {
 }
 
 bool btn_released(enum Button btn) {
-    //return (btn_status[btn - BTN_LEFT] == 2);
+    // return (btn_status[btn - BTN_LEFT] == 2);
     int idx = btn - BTN_LEFT;
     if (btn_status[idx] == 2) {
         btn_status[idx] = 0;

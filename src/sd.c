@@ -1,19 +1,21 @@
-#include <stdlib.h>
 #include "sd.h"
-#include "gpio.h"
+
+#include <stdlib.h>
+
 #include "delay.h"
+#include "gpio.h"
 
 // CS: B12
 // SCK: B13
 // MISO: B14 // PUR needed? Probably not since using breakout
 // MOSI: B15 // Keep high during read transfer (after sending command)?
 
-#define SPI_CLK    (1 << 14)
+#define SPI_CLK (1 << 14)
 #define SPI2_START 0x40003800
-#define SPI2_CR1   (*((volatile uint32_t *)(SPI2_START + 0x00)))
-#define SPI2_CR2   (*((volatile uint32_t *)(SPI2_START + 0x04)))
-#define SPI2_SR    (*((volatile uint32_t *)(SPI2_START + 0x08)))
-#define SPI2_DR    (*((volatile uint32_t *)(SPI2_START + 0x0C)))
+#define SPI2_CR1 (*((volatile uint32_t *)(SPI2_START + 0x00)))
+#define SPI2_CR2 (*((volatile uint32_t *)(SPI2_START + 0x04)))
+#define SPI2_SR (*((volatile uint32_t *)(SPI2_START + 0x08)))
+#define SPI2_DR (*((volatile uint32_t *)(SPI2_START + 0x0C)))
 
 #define RESET_DUMMY_CYCLES 10
 #define START_BITS 0x40
@@ -36,62 +38,52 @@ struct command {
 const struct command GO_IDLE_STATE = {
     0,
     {0x00, 0x00, 0x00, 0x00},
-    0x4A
-};
+    0x4A};
 
 const struct command SEND_IF_COND = {
     8,
     {0x00, 0x00, 0x01, 0xAA},
-    0x43
-};
+    0x43};
 
 const struct command APP_CMD = {
     55,
     {0x00, 0x00, 0x00, 0x00},
-    0xFF
-};
+    0xFF};
 
 const struct command SD_SEND_OP_COND = {
     41,
     {0x40, 0x00, 0x00, 0xA0},
-    0xFF
-};
+    0xFF};
 
 const struct command READ_OCR = {
     58,
     {0x00, 0x00, 0x00, 0x00},
-    0xFF
-};
+    0xFF};
 
 const struct command READ_SINGLE_BLOCK = {
     17,
-    {0x00, 0x00, 0x00, 0x00}, // These will be replaced by addr bytes
-    0xFF
-};
+    {0x00, 0x00, 0x00, 0x00},  // These will be replaced by addr bytes
+    0xFF};
 
 const struct command READ_MULTIPLE_BLOCK = {
     18,
-    {0x00, 0x00, 0x00, 0x00}, // These will be replaced by addr bytes
-    0xFF
-};
+    {0x00, 0x00, 0x00, 0x00},  // These will be replaced by addr bytes
+    0xFF};
 
 const struct command STOP_TRANSMISSION = {
     12,
     {0x00, 0x00, 0x00, 0x00},
-    0xFF
-};
+    0xFF};
 
 const struct command WRITE_BLOCK = {
     24,
-    {0x00, 0x00, 0x00, 0x00}, // These will be replaced by addr bytes
-    0xFF
-};
+    {0x00, 0x00, 0x00, 0x00},  // These will be replaced by addr bytes
+    0xFF};
 
 const struct command WRITE_MULTIPLE_BLOCK = {
     25,
-    {0x00, 0x00, 0x00, 0x00}, // These will be replaced by addr bytes
-    0xFF
-};
+    {0x00, 0x00, 0x00, 0x00},  // These will be replaced by addr bytes
+    0xFF};
 
 static void _gpio_init(void) {
     // Disable reset state
@@ -106,7 +98,8 @@ static void _gpio_init(void) {
 
 static void _spi_init1(void) {
     RCC_APB1ENR |= SPI_CLK;
-    for (volatile int i = 0; i < 10; i++);
+    for (volatile int i = 0; i < 10; i++)
+        ;
 
     // CLK / 128
     // SD must be initialized with a clk speed of between 100-400KHz
@@ -114,10 +107,10 @@ static void _spi_init1(void) {
     // 36MHz / 128 equals roughly 280KHz
     SPI2_CR1 |= (3 << 4);
 
-    SPI2_CR1 |= (1 << 9); // Enable software CS
-    SPI2_CR2 |= (1 << 2); // Enable CS output
-    SPI2_CR1 |= (1 << 2); // Set as master
-    SPI2_CR1 |= (1 << 6); // Enable
+    SPI2_CR1 |= (1 << 9);  // Enable software CS
+    SPI2_CR2 |= (1 << 2);  // Enable CS output
+    SPI2_CR1 |= (1 << 2);  // Set as master
+    SPI2_CR1 |= (1 << 6);  // Enable
 }
 
 static void _spi_init2(void) {
@@ -129,16 +122,17 @@ static void _spi_init2(void) {
     GPIOB_CRH |= (1 << 19);
 
     // Change the frequency to something much faster
-    SPI2_CR1 &= ~(3 << 4); // Erase old freq settings
-    SPI2_CR1 |= (1 << 5); // CLK / 32 (might be able to go faster)
+    SPI2_CR1 &= ~(3 << 4);  // Erase old freq settings
+    SPI2_CR1 |= (1 << 5);   // CLK / 32 (might be able to go faster)
 
-    SPI2_CR1 &= ~(1 << 9); // Disable software CS (thus enabling hardware CS)
-    SPI2_CR1 |= (1 << 6); // Re-enable SPI
+    SPI2_CR1 &= ~(1 << 9);  // Disable software CS (thus enabling hardware CS)
+    SPI2_CR1 |= (1 << 6);   // Re-enable SPI
 }
 
 static void _sd_write(uint8_t data) {
     SPI2_DR = data;
-    while (!(SPI2_SR & 0x02));
+    while (!(SPI2_SR & 0x02))
+        ;
 }
 
 static uint8_t _sd_read(void) {
@@ -169,7 +163,7 @@ static uint8_t _read_R1(void) {
     return resp;
 }
 
-static const uint8_t* _read_R3(void) {
+static const uint8_t *_read_R3(void) {
     static uint8_t resp[NUM_R3_RESP_BYTES];
 
     // First read the response byte. Then read in data bytes.
@@ -183,7 +177,7 @@ static const uint8_t* _read_R3(void) {
 }
 
 static void _power_on(void) {
-    GPIOB_ODR |= (1 << 12); // Set CS high
+    GPIOB_ODR |= (1 << 12);  // Set CS high
 
     // Send >74 dummy clocks with MOSI high
     _dummy_write(RESET_DUMMY_CYCLES);
@@ -256,8 +250,8 @@ static bool _initialize(void) {
 static bool _wait_for_data_token(uint8_t token) {
     while (_sd_read() != token)
         _dummy_write(1);
-    
-    return true; // Todo: Return false if timeout
+
+    return true;  // Todo: Return false if timeout
 }
 
 static bool _wait_for_data_resp(void) {
@@ -290,13 +284,13 @@ static void _read_block_data(uint8_t *buffer) {
 }
 
 static bool _write_block_data(const uint8_t *buffer) {
-    _sd_write(RW_OK); // Send the packet start token
+    _sd_write(RW_OK);  // Send the packet start token
 
     // Send all data bytes
     for (int i = 0; i < SD_BLOCK_SIZE; i++)
         _sd_write(buffer[i]);
-    
-    _sd_write(0xFF); // Send bogus CRC
+
+    _sd_write(0xFF);  // Send bogus CRC
 
     return _wait_for_data_resp();
 }
@@ -349,7 +343,7 @@ void sd_read_blocks(uint32_t addr, uint8_t *buffer, int num_blocks) {
 
         // Signal we wish to stop reading data
         _send_cmd(&STOP_TRANSMISSION, NULL);
-        _dummy_write(1); // Discard stuff byte
+        _dummy_write(1);  // Discard stuff byte
         _read_R1();
     }
 }

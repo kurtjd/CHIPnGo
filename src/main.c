@@ -2,17 +2,18 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include "sysclk.h"
-#include "clock.h"
-#include "gpio.h"
-#include "uart.h"
-#include "sd.h"
-#include "display.h"
+
 #include "buttons.h"
-#include "pwm.h"
-#include "delay.h"
 #include "chip8.h"
+#include "clock.h"
+#include "delay.h"
+#include "display.h"
+#include "gpio.h"
 #include "led.h"
+#include "pwm.h"
+#include "sd.h"
+#include "sysclk.h"
+#include "uart.h"
 
 #define MAX_ROMS 25
 
@@ -33,12 +34,11 @@ uint16_t BTN_B_MAP = 0x40;
 bool play_sound = false;
 int rom_num = 0;
 
-
 // A basic splash screen that waits for user to press A
 void show_splash(void) {
     display_print(37, 4, "CHIP N GO");
-    //display_print(20, 4, "PRESS A TO PLAY");
-    //display_print(20, 7, "CREATED BY KURT");
+    // display_print(20, 4, "PRESS A TO PLAY");
+    // display_print(20, 7, "CREATED BY KURT");
 
     for (int i = 0; i < 10; i++) {
         pwm_start();
@@ -49,8 +49,8 @@ void show_splash(void) {
 
     display_clear();
 
-    //while (!btn_released(BTN_A));
-    //delay(2000);
+    // while (!btn_released(BTN_A));
+    // delay(2000);
 }
 
 void btn_to_key(uint16_t btn_map, CHIP8K action) {
@@ -68,12 +68,10 @@ void parse_quirks(uint8_t q) {
     }
 }
 
-
 // Set up the emulator to begin running.
-bool init_emulator(void)
-{
+bool init_emulator(void) {
     chip8_init(&chip8, cpu_freq, timer_freq, refresh_freq, PC_START_ADDR_DEFAULT,
-                quirks, metadata, rom_num);
+               quirks, metadata, rom_num);
     chip8_load_font(&chip8);
 
     return true;
@@ -156,7 +154,7 @@ void select_rom(void) {
                 scan_dir = -1;
         }
         rom_num += scan_dir;
-        
+
         pwm_start();
         delay(1);
         pwm_stop();
@@ -168,42 +166,35 @@ void select_rom(void) {
     // Just hang since no way to recover
     display_clear();
     display_print(25, 4, "ROM NOT FOUND");
-    while(1);
+    while (1)
+        ;
 }
 
 // Makes the physical screen match the emulator display.
-void draw_display(void)
-{
+void draw_display(void) {
     display_draw(chip8.display);
 }
 
 // Handles sound.
-void handle_sound(void)
-{
-    if (!play_sound && chip8.beep)
-    {
+void handle_sound(void) {
+    if (!play_sound && chip8.beep) {
         pwm_start();
         play_sound = true;
-    }
-    else if (play_sound && !chip8.beep)
-    {
+    } else if (play_sound && !chip8.beep) {
         pwm_stop();
         play_sound = false;
     }
 }
 
 // Handles drawing the display.
-void handle_display(void)
-{
-    if (chip8.display_updated)
-    {
+void handle_display(void) {
+    if (chip8.display_updated) {
         draw_display();
     }
 }
 
 // Checks for key presses/releases and a quit event.
-void handle_input(void)
-{
+void handle_input(void) {
     if (btn_pressed(BTN_LEFT))
         btn_to_key(BTN_LEFT_MAP, KEY_DOWN);
     if (btn_pressed(BTN_UP))
@@ -252,7 +243,8 @@ void handle_sd() {
     // Wait for user to insert SD card
     if (!sd_inserted()) {
         display_print(2, 4, "INSERT GAME CARTRIDGE");
-        while(!sd_inserted());
+        while (!sd_inserted())
+            ;
 
         // Wait briefly for SD to be fully inserted
         display_clear();
@@ -263,12 +255,12 @@ void handle_sd() {
     if (!sd_init()) {
         display_print(5, 3, "GAME CARTRIDGE ERROR");
         display_print(22, 4, "PLEASE RESTART");
-        while(1);
+        while (1)
+            ;
     }
 }
 
-int main(void)
-{
+int main(void) {
     set_sysclk(72);
 
     gpio_init(GPIOA);
@@ -279,7 +271,7 @@ int main(void)
 
     display_init();
     show_splash();
-    
+
     handle_sd();
 
     buttons_init();
@@ -288,8 +280,7 @@ int main(void)
     select_rom();
     init_emulator();
 
-    while (1)
-    {
+    while (1) {
         handle_input();
         chip8_cycle(&chip8);
         handle_sound();

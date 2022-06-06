@@ -32,15 +32,13 @@
 #define USER_FLAGS_IDX 31
 
 // The states each key of the keypad can be in.
-typedef enum
-{
+typedef enum {
     KEY_UP,
     KEY_DOWN,
     KEY_RELEASED
 } CHIP8K;
 
-typedef struct CHIP8
-{
+typedef struct CHIP8 {
     // Represents random-access memory.
     uint8_t RAM[MAX_RAM];
 
@@ -116,7 +114,7 @@ void chip8_init(CHIP8 *chip8, unsigned long cpu_freq, unsigned long timer_freq,
 void chip8_reset(CHIP8 *chip8);
 
 // Soft reset the machine (keep ROM and fonts loaded).
-//void chip8_soft_reset(CHIP8 *chip8);
+// void chip8_soft_reset(CHIP8 *chip8);
 
 // Sets the CPU frequency of the machine.
 void chip8_set_cpu_freq(CHIP8 *chip8, unsigned long cpu_freq);
@@ -131,8 +129,8 @@ void chip8_set_refresh_freq(CHIP8 *chip8, unsigned long refresh_freq);
 void chip8_load_font(CHIP8 *chip8);
 
 // Loads a given ROM into memory.
-//bool chip8_load_rom(CHIP8 *chip8);
-  
+// bool chip8_load_rom(CHIP8 *chip8);
+
 /* Performs a full cycle of the emulator including executing an instruction and
 handling timers. Returns true if instruction was executed
 or false if the CPU was sleeping. */
