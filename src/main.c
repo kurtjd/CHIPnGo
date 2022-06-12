@@ -285,6 +285,10 @@ int main(void) {
         chip8_cycle(&chip8);
         handle_sound();
         handle_display();
+
+        // Exit gets set true if the ROM calls the exit command
+        if (chip8.exit)
+            chip8_reset(&chip8);
     }
 
     return 0;
