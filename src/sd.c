@@ -5,17 +5,18 @@
 #include "delay.h"
 #include "gpio.h"
 
-// CS: B12
-// SCK: B13
-// MISO: B14 // PUR needed? Probably not since using breakout
-// MOSI: B15 // Keep high during read transfer (after sending command)?
+// CS: A4
+// SCK: A5
+// MISO: A6 // PUR needed? Probably not since using breakout
+// MOSI: A7 // Keep high during read transfer (after sending command)?
+// Det: A9
 
-#define SPI_CLK (1 << 14)
-#define SPI2_START 0x40003800
-#define SPI2_CR1 (*((volatile uint32_t *)(SPI2_START + 0x00)))
-#define SPI2_CR2 (*((volatile uint32_t *)(SPI2_START + 0x04)))
-#define SPI2_SR (*((volatile uint32_t *)(SPI2_START + 0x08)))
-#define SPI2_DR (*((volatile uint32_t *)(SPI2_START + 0x0C)))
+#define SPI_CLK (1 << 12)
+#define SPI1_START 0x40013000
+#define SPI1_CR1 (*((volatile uint32_t *)(SPI1_START + 0x00)))
+#define SPI1_CR2 (*((volatile uint32_t *)(SPI1_START + 0x04)))
+#define SPI1_SR (*((volatile uint32_t *)(SPI1_START + 0x08)))
+#define SPI1_DR (*((volatile uint32_t *)(SPI1_START + 0x0C)))
 
 #define RESET_DUMMY_CYCLES 10
 #define START_BITS 0x40
@@ -87,56 +88,56 @@ const struct command WRITE_MULTIPLE_BLOCK = {
 
 static void _gpio_init(void) {
     // Disable reset state
-    GPIOB_CRH &= ~((1 << 18) | (1 << 22) | (1 << 30));
+    GPIOA_CRL &= ~((1 << 18) | (1 << 22) | (1 << 30));
 
-    // MODEy (12, 13, 15 2MHz out, 14 in)
-    GPIOB_CRH |= ((1 << 17) | (1 << 21) | (1 << 29));
+    // MODEy (4, 5, 7 2MHz out, 6 in)
+    GPIOA_CRL |= ((1 << 17) | (1 << 21) | (1 << 29));
 
-    // CNFy (13, 15 alt out, 14 floating in)
-    GPIOB_CRH |= ((1 << 23) | (1 << 31));
+    // CNFy (5, 7 alt out, 6 floating in)
+    GPIOA_CRL |= ((1 << 23) | (1 << 31));
 }
 
 static void _spi_init1(void) {
-    RCC_APB1ENR |= SPI_CLK;
+    RCC_APB2ENR |= SPI_CLK;
     for (volatile int i = 0; i < 10; i++)
         ;
 
-    // CLK / 128
+    // CLK / 256
     // SD must be initialized with a clk speed of between 100-400KHz
-    // When CPU clock is set to 72MHz, APB1 clock is set to 36Mhz
-    // 36MHz / 128 equals roughly 280KHz
-    SPI2_CR1 |= (3 << 4);
+    // When CPU clock is set to 72MHz, APB2 clock is set to 72Mhz
+    // 72MHz / 256 equals roughly 280KHz
+    SPI1_CR1 |= (7 << 3);
 
-    SPI2_CR1 |= (1 << 9);  // Enable software CS
-    SPI2_CR2 |= (1 << 2);  // Enable CS output
-    SPI2_CR1 |= (1 << 2);  // Set as master
-    SPI2_CR1 |= (1 << 6);  // Enable
+    SPI1_CR1 |= (1 << 9);  // Enable software CS
+    SPI1_CR2 |= (1 << 2);  // Enable CS output
+    SPI1_CR1 |= (1 << 2);  // Set as master
+    SPI1_CR1 |= (1 << 6);  // Enable
 }
 
 static void _spi_init2(void) {
     // Wait for SPI to finish up then disable it
     delay(10);
-    SPI2_CR1 &= ~(1 << 6);
+    SPI1_CR1 &= ~(1 << 6);
 
     // Change CS pin to alt function output
-    GPIOB_CRH |= (1 << 19);
+    GPIOA_CRL |= (1 << 19);
 
     // Change the frequency to something much faster
-    SPI2_CR1 &= ~(3 << 4);  // Erase old freq settings
-    SPI2_CR1 |= (1 << 5);   // CLK / 32 (might be able to go faster)
+    SPI1_CR1 &= ~(3 << 4);  // Erase old freq settings
+    SPI1_CR1 |= (1 << 5);   // CLK / 32 (might be able to go faster)
 
-    SPI2_CR1 &= ~(1 << 9);  // Disable software CS (thus enabling hardware CS)
-    SPI2_CR1 |= (1 << 6);   // Re-enable SPI
+    SPI1_CR1 &= ~(1 << 9);  // Disable software CS (thus enabling hardware CS)
+    SPI1_CR1 |= (1 << 6);   // Re-enable SPI
 }
 
 static void _sd_write(uint8_t data) {
-    SPI2_DR = data;
-    while (!(SPI2_SR & 0x02))
+    SPI1_DR = data;
+    while (!(SPI1_SR & 0x02))
         ;
 }
 
 static uint8_t _sd_read(void) {
-    return SPI2_DR;
+    return SPI1_DR;
 }
 
 static void _dummy_write(int n) {
@@ -177,7 +178,7 @@ static const uint8_t *_read_R3(void) {
 }
 
 static void _power_on(void) {
-    GPIOB_ODR |= (1 << 12);  // Set CS high
+    GPIOA_ODR |= (1 << 4);  // Set CS high
 
     // Send >74 dummy clocks with MOSI high
     _dummy_write(RESET_DUMMY_CYCLES);
@@ -304,7 +305,7 @@ bool sd_init(void) {
     _power_on();
 
     // Set CS low manually since we aren't in full-blown SPI yet
-    GPIOB_ODR &= ~(1 << 12);
+    GPIOA_ODR &= ~(1 << 4);
 
     // Ensure all stages of sequence were successful
     if (!_reset())
@@ -320,7 +321,7 @@ bool sd_init(void) {
 }
 
 bool sd_inserted(void) {
-    return (GPIOA_IDR & (1 << 8));
+    return (GPIOA_IDR & (1 << 9));
 }
 
 void sd_read_block(uint32_t addr, uint8_t *buffer) {

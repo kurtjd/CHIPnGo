@@ -5,21 +5,21 @@
 #include "delay.h"
 #include "gpio.h"
 
-// CS: A4
-// SCK: A5
-// A0: A6
-// SDA: A7
-// RST: A3
+// CS: B12
+// SCK: B13
+// A0: A8
+// SDA: B15
+// RST: B14
 
-#define SPI_CLK (1 << 12)
-#define SPI1_START 0x40013000
-#define SPI1_CR1 (*((volatile uint32_t *)(SPI1_START + 0x00)))
-#define SPI1_CR2 (*((volatile uint32_t *)(SPI1_START + 0x04)))
-#define SPI1_SR (*((volatile uint32_t *)(SPI1_START + 0x08)))
-#define SPI1_DR (*((volatile uint32_t *)(SPI1_START + 0x0C)))
+#define SPI_CLK (1 << 14)
+#define SPI2_START 0x40003800
+#define SPI2_CR1 (*((volatile uint32_t *)(SPI2_START + 0x00)))
+#define SPI2_CR2 (*((volatile uint32_t *)(SPI2_START + 0x04)))
+#define SPI2_SR (*((volatile uint32_t *)(SPI2_START + 0x08)))
+#define SPI2_DR (*((volatile uint32_t *)(SPI2_START + 0x0C)))
 
-#define A0 (1 << 6)
-#define RST (1 << 3)
+#define A0 (1 << 8)
+#define RST (1 << 14)
 
 #define SET_PAGE_ADDR 0xB0
 #define SET_COL_ADDR_MSB 0x10
@@ -100,32 +100,33 @@ static const uint8_t *_char_to_bits(char c) {
 
 static void _gpio_init(void) {
     // Disable reset state
-    GPIOA_CRL &= ~((1 << 14) | (1 << 18) | (1 << 22) | (1 << 26) | (1 << 30));
+    GPIOA_CRH &= ~(1 << 2);
+    GPIOB_CRH &= ~((1 << 18) | (1 << 22) | (1 << 26) | (1 << 30));
 
-    // MODEy (3, 4, 5, 6, 7 2MHz out)
-    GPIOA_CRL |= ((1 << 13) | (1 << 17) | (1 << 21) | (1 << 25) | (1 << 29));
+    // MODEy (A8, B12, B13, B14, B15 2MHz out)
+    GPIOA_CRH |= (1 << 1);
+    GPIOB_CRH |= ((1 << 17) | (1 << 21) | (1 << 25) | (1 << 29));
 
-    // CNFy (4, 5, 7 alt out, 3, 6 gpo)
-    GPIOA_CRL |= ((1 << 19) | (1 << 23) | (1 << 31));
+    // CNFy (B12, B13, B15 alt out, A8, B14 gpo)
+    GPIOB_CRH |= ((1 << 19) | (1 << 23) | (1 << 31));
 }
 
 static void _spi_init(void) {
-    RCC_APB2ENR |= SPI_CLK;
+    RCC_APB1ENR |= SPI_CLK;
     for (volatile int i = 0; i < 10; i++)
         ;
 
-    // SPI1_CR1 |= (3 << 3); // CLK / 16 (fastest speed that works)
-    SPI1_CR1 |= (1 << 5);   // CLK / 32 (fastest speed that doesn't glitch?)
-    SPI1_CR2 |= (1 << 2);   // Enable SS output
-    SPI1_CR1 |= (1 << 15);  // 1 line mode
-    SPI1_CR1 |= (1 << 14);  // Transmit-only
-    SPI1_CR1 |= (1 << 2);   // Set as master
-    SPI1_CR1 |= (1 << 6);   // Enable
+    SPI2_CR1 |= (3 << 3);   // CLK / 16 (fastest speed that works)
+    SPI2_CR2 |= (1 << 2);   // Enable SS output
+    SPI2_CR1 |= (1 << 15);  // 1 line mode
+    SPI2_CR1 |= (1 << 14);  // Transmit-only
+    SPI2_CR1 |= (1 << 2);   // Set as master
+    SPI2_CR1 |= (1 << 6);   // Enable
 }
 
 static void _display_write(uint8_t data) {
-    SPI1_DR = data;
-    while (!(SPI1_SR & 0x02))
+    SPI2_DR = data;
+    while (!(SPI2_SR & 0x02))
         ;
     for (volatile int i = 0; i < 10; i++)
         ;  // Need a very brief delay
@@ -144,9 +145,9 @@ void display_init(void) {
     _gpio_init();
 
     // Perform hardware reset of display
-    GPIOA_ODR &= ~RST;
+    GPIOB_ODR &= ~RST;
     delay(5);
-    GPIOA_ODR |= RST;
+    GPIOB_ODR |= RST;
     delay(1);
 
     _spi_init();
