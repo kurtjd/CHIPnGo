@@ -6,7 +6,7 @@
 Recently I've taken a serious interest in embedded development, so I decided for my first project I would attempt to port my [CHIP-8 emulator](https://github.com/kurtjd/jaxe) to a STM32 microcontroller in order to eventually build a CHIP-8 hand-held gaming console. Since this is being done as a learning experience, I also decided I would do this bare-metal with no libraries and write all drivers from scratch. While this is proving to be slow and extremely frustrating at times, it has also been very insightful and I've already learned a ton in such a short time.
 
 ## Progress
-Prototype is essentially complete and next step is to design custom PCB.
+The PCB is fully functional! Will probably do some minor firmware tweaks in the future but other than that the console is complete!
 
 [See it in action!](https://www.youtube.com/watch?v=ixTLp5M0RTQ)
 
@@ -22,9 +22,6 @@ Prototype is essentially complete and next step is to design custom PCB.
 ## ToDo
 - Improve startup menu for user to select ROM via SD card (make a bit more pretty)
 - Improve startup splash screen (want something cool and animated)
-- Add switches to turn console on/off, enable/disable backlight, and enable/disable sound
-- Perform extensive testing on breadboard prototype
-- Learn PCB design and create custom PCB
 - Create simple case for PCB
 
 ## Limitations
