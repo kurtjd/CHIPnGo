@@ -8,8 +8,8 @@
 
 bool sd_init(void);
 bool sd_inserted(void);
-void sd_read_block(uint32_t addr, uint8_t *buffer);
-void sd_read_blocks(uint32_t addr, uint8_t *buffer, int num_blocks);
+bool sd_read_block(uint32_t addr, uint8_t *buffer);
+bool sd_read_blocks(uint32_t addr, uint8_t *buffer, int num_blocks);
 bool sd_write_block(uint32_t addr, const uint8_t *buffer);
 
 #endif

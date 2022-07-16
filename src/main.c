@@ -277,6 +277,7 @@ int main(void) {
     buttons_init();
 
     clock_start();
+
     select_rom();
     init_emulator();
 

@@ -29,6 +29,7 @@
 #define RW_OK 0xFE
 #define DATA_ACCEPTED 2
 #define INIT_MAX_ATTEMPTS 1000
+#define READ_MAX_ATTEMPTS 1000
 
 struct command {
     uint8_t cmd_bits;
@@ -123,7 +124,7 @@ static void _spi_init2(void) {
     GPIOA_CRL |= (1 << 19);
 
     // Change the frequency to something much faster
-    SPI1_CR1 &= ~(3 << 4);  // Erase old freq settings
+    SPI1_CR1 &= ~(7 << 3);  // Erase old freq settings
     SPI1_CR1 |= (1 << 5);   // CLK / 32 (might be able to go faster)
 
     SPI1_CR1 &= ~(1 << 9);  // Disable software CS (thus enabling hardware CS)
@@ -249,10 +250,14 @@ static bool _initialize(void) {
 }
 
 static bool _wait_for_data_token(uint8_t token) {
-    while (_sd_read() != token)
-        _dummy_write(1);
+    int attempts = 0;
 
-    return true;  // Todo: Return false if timeout
+    while (attempts < READ_MAX_ATTEMPTS && _sd_read() != token) {
+        _dummy_write(1);
+        attempts++;
+    }
+
+    return (attempts < READ_MAX_ATTEMPTS);
 }
 
 static bool _wait_for_data_resp(void) {
@@ -271,9 +276,9 @@ static void _split_addr(uint32_t addr, uint8_t *buffer) {
         buffer[i] = (addr >> (24 - (i * 8))) & 0xFF;
 }
 
-static void _read_block_data(uint8_t *buffer) {
+static bool _read_block_data(uint8_t *buffer) {
     if (!_wait_for_data_token(RW_OK))
-        return;
+        return false;
 
     for (int i = 0; i < SD_BLOCK_SIZE; i++) {
         _dummy_write(1);
@@ -282,6 +287,8 @@ static void _read_block_data(uint8_t *buffer) {
 
     // Have to read the 2 byte CRC so send a couple dummy writes
     _dummy_write(2);
+
+    return true;
 }
 
 static bool _write_block_data(const uint8_t *buffer) {
@@ -324,29 +331,37 @@ bool sd_inserted(void) {
     return (GPIOA_IDR & (1 << 9));
 }
 
-void sd_read_block(uint32_t addr, uint8_t *buffer) {
+bool sd_read_block(uint32_t addr, uint8_t *buffer) {
     uint8_t args[NUM_ARGS];
     _split_addr(addr, args);
 
     _send_cmd(&READ_SINGLE_BLOCK, args);
-    if (_read_R1() == CMD_OK)
-        _read_block_data(buffer);
+    if (_read_R1() == CMD_OK) {
+        if (!_read_block_data(buffer))
+            return false;
+    }
+
+    return true;
 }
 
-void sd_read_blocks(uint32_t addr, uint8_t *buffer, int num_blocks) {
+bool sd_read_blocks(uint32_t addr, uint8_t *buffer, int num_blocks) {
     uint8_t args[NUM_ARGS];
     _split_addr(addr, args);
 
     _send_cmd(&READ_MULTIPLE_BLOCK, args);
     if (_read_R1() == CMD_OK) {
-        for (int i = 0; i < num_blocks; i++)
-            _read_block_data(buffer + (i * SD_BLOCK_SIZE));
+        for (int i = 0; i < num_blocks; i++) {
+            if (!_read_block_data(buffer + (i * SD_BLOCK_SIZE)))
+                return false;
+        }
 
         // Signal we wish to stop reading data
         _send_cmd(&STOP_TRANSMISSION, NULL);
         _dummy_write(1);  // Discard stuff byte
         _read_R1();
     }
+
+    return true;
 }
 
 bool sd_write_block(uint32_t addr, const uint8_t *buffer) {
