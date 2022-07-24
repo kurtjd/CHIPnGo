@@ -28,8 +28,8 @@
 #define CMD_OK 0
 #define RW_OK 0xFE
 #define DATA_ACCEPTED 2
-#define INIT_MAX_ATTEMPTS 1000
-#define READ_MAX_ATTEMPTS 1000
+#define INIT_MAX_ATTEMPTS 10000
+#define READ_MAX_ATTEMPTS 10000
 
 struct command {
     uint8_t cmd_bits;
