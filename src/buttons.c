@@ -120,26 +120,18 @@ void buttons_init(void) {
     GPIOB_CRL &= ~(BTN_LEFT_MODE_FI | BTN_UP_MODE_FI);
     GPIOB_CRL &= ~(BTN_DOWN_MODE_FI | BTN_RIGHT_MODE_FI);
     GPIOB_CRH &= ~(BTN_A_MODE_FI | BTN_B_MODE_FI);
-    
-    display_print(0, 0, "1");
 
     // Set inputs as internal pull-up
     GPIOB_CRL |= (BTN_LEFT_MODE_PU | BTN_UP_MODE_PU);
     GPIOB_CRL |= (BTN_DOWN_MODE_PU | BTN_RIGHT_MODE_PU);
     GPIOB_CRH |= (BTN_A_MODE_PU | BTN_B_MODE_PU);
 
-    display_print(0, 1, "2");
-
     // Activate pull-up resistors
     GPIOB_ODR |= ((1 << 4) | (1 << 5) | (1 << 6) | (1 << 7));
     GPIOB_ODR |= ((1 << 10) | (1 << 11));
 
-    display_print(0, 2, "3");
-
     // AFSIO EXTI set to port B
     RCC_APB2ENR |= 1;
-
-    display_print(0, 3, "4");
 
     // Directional
     AFIO2 |= ((1) | (1 << 4) | (1 << 8) | (1 << 12));
@@ -147,14 +139,10 @@ void buttons_init(void) {
     // A/B
     AFIO3 |= ((1 << 8) | (1 << 12));
 
-    display_print(0, 4, "5");
-
     // Unmask external interrupts
     EXTI_IMR |= (BTN_LEFT_INT_EXTI | BTN_RIGHT_INT_EXTI);
     EXTI_IMR |= (BTN_UP_INT_EXTI | BTN_DOWN_INT_EXTI);
     EXTI_IMR |= (BTN_A_INT_EXTI | BTN_B_INT_EXTI);
-
-    display_print(0, 5, "6");
 
     // Trigger on rising AND falling edge
     EXTI_RTSR |= (BTN_LEFT_INT_EXTI | BTN_RIGHT_INT_EXTI);
@@ -167,8 +155,6 @@ void buttons_init(void) {
     // Finally enable interrupts on the NVIC
     NVIC_ISER0 |= (BTN_LEFT_INT_NVIC | BTN_OTHERS_INT_NVIC);
     NVIC_ISER1 |= (BTN_A_B);
-
-    display_print(0, 6, "7");
 }
 
 bool btn_pressed(enum Button btn) {
